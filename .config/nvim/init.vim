@@ -51,6 +51,14 @@ if !exists('g:vscode')
       return expand('%:t') !=# '' ? @% : '[No Name]'
     endfunction
 
+    " Coc extensions used
+    let g:coc_global_extensions = [
+      \'coc-rust-analyzer',
+      \'coc-go',
+      \'coc-explorer',
+      \]
+
+
     " Use auocmd to force lightline update.
     autocmd User CocStatusChange,CocDiagnosticChange call lightline#update()
 
