@@ -17,6 +17,8 @@ if !exists('g:vscode')
     Plug 'rust-lang/rust.vim'
     " toml
     Plug 'cespare/vim-toml'
+    " go
+    Plug 'fatih/vim-go'
 
     " completion
     Plug 'neoclide/coc.nvim', {'branch': 'release'}
