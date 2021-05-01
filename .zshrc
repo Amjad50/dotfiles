@@ -63,12 +63,18 @@ alias lc='colorls'
 
 # Created by `userpath` on 2020-03-22 07:27:33
 export PATH="$PATH:$HOME/.local/bin"
-export PATH="$PATH:$HOME/.gem/ruby/2.7.0/bin"
+# export PATH="$PATH:$HOME/.gem/ruby/2.7.0/bin"
+export PATH="$PATH:$HOME/.gem/ruby/3.0.0/bin"
 
 # rust
 source $HOME/.cargo/env
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# go
+export PATH="$PATH:$(go env GOPATH)/bin"
+
+# fzf
+source /usr/share/fzf/key-bindings.zsh
+source /usr/share/fzf/completion.zsh
 
 # rga-zfz (https://github.com/phiresky/ripgrep-all)
 rga-fzf() {
