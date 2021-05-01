@@ -11,7 +11,11 @@ if !exists('g:vscode')
     " Plug 'kjwon15/vim-transparent'
 
     " integrations
+    Plug 'tpope/vim-fugitive'
     Plug 'airblade/vim-gitgutter'
+    Plug 'junegunn/fzf.vim'
+    Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+    Plug 'liuchengxu/vista.vim'
 
     " rust
     Plug 'rust-lang/rust.vim'
@@ -38,14 +42,20 @@ if !exists('g:vscode')
     let g:lightline = {
           \ 'active': {
           \   'left': [ [ 'mode', 'paste' ],
-          \             [ 'cocstatus', 'readonly', 'filename', 'modified' ] ]
+          \             [ 'cocstatus', 'readonly', 'filename', 'modified', 'method' ] ]
           \ },
           \ 'component_function': {
           \   'filename': 'LightlineFilename',
-          \   'cocstatus': 'coc#status'
+          \   'cocstatus': 'coc#status',
+          \   'method': 'NearestMethodOrFunction'
           \ },
           \ 'colorscheme': 'codedark',
           \ }
+
+    function! NearestMethodOrFunction()
+      return get(b:, 'vista_nearest_method_or_function', '')
+    endfunction
+    autocmd VimEnter * call vista#RunForNearestMethodOrFunction()
 
     function! LightlineFilename()
       return expand('%:t') !=# '' ? @% : '[No Name]'
@@ -239,6 +249,25 @@ if !exists('g:vscode')
 
     " preview
     nmap gp <Plug>(GitGutterPreviewHunk)
+
+    " PLUGIN: FZF
+    nnoremap <silent> <C-f> :Files<CR>
+    nnoremap <silent> <Leader>st :GFiles?<CR>
+    nnoremap <silent> <Leader>b :Buffers<CR>
+    nnoremap <silent> <Leader>f :Rg<CR>
+
+    nnoremap <silent> <Leader>/ :BLines<CR>
+    nnoremap <silent> <Leader>g :Commits<CR>
+    " nnoremap <silent> <Leader>gb :BCommits<CR>
+
+    nnoremap <silent> <Leader>hh :History<CR>
+    nnoremap <silent> <Leader>h: :History:<CR>
+    nnoremap <silent> <Leader>h/ :History/<CR>
+
+    nnoremap <silent> <Leader>M :Maps<CR>
+    nnoremap <silent> <Leader>H :Helptags<CR>
+
+    nnoremap <silent> <Leader>c :Vista finder<CR>
 else
 
     " show documentation
