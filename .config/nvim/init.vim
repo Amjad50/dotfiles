@@ -66,11 +66,16 @@ if !exists('g:vscode')
       \'coc-rust-analyzer',
       \'coc-go',
       \'coc-explorer',
+      \'coc-highlight'
       \]
 
 
-    " Use auocmd to force lightline update.
+    " autocmd to force lightline update.
     autocmd User CocStatusChange,CocDiagnosticChange call lightline#update()
+    " autocmd to trigger symbol highlight in COC
+    autocmd CursorHold * silent call CocActionAsync('highlight')
+    " The color of the highlight
+    autocmd ColorScheme * highlight CocHighlightText ctermbg=60 guibg=#5f5f87
 
     " #GUI
     " colors
