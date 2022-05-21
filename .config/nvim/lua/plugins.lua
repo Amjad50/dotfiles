@@ -130,33 +130,6 @@ return require('packer').startup(function()
     end
   }
 
-  -- formatting
-  use {'mhartington/formatter.nvim',
-    config = function()
-        require('formatter').setup({
-          filetype = {
-            rust = {
-              -- Rustfmt
-              function()
-                return {
-                  exe = "rustfmt",
-                  args = {"--emit=stdout"},
-                  stdin = true,
-                  ignore_exitcode = true
-                }
-              end
-            },
-          }
-        })
-        vim.api.nvim_exec([[
-        augroup FormatAutogroup
-          autocmd!
-          autocmd BufWritePost *.rs FormatWrite
-        augroup END
-        ]], true)
-    end
-  }
-
   -- todo
   use {
     "folke/todo-comments.nvim",
@@ -170,9 +143,20 @@ return require('packer').startup(function()
   --use {'rust-lang/rust.vim'}
 
   -- bufferline
-  use {
-    'romgrk/barbar.nvim',
-    requires = {'kyazdani42/nvim-web-devicons'}
+  use {'akinsho/bufferline.nvim',
+    tag = "v2.*",
+    requires = 'kyazdani42/nvim-web-devicons',
+    config = function()
+      vim.opt.termguicolors = true
+      require("bufferline").setup{
+        options = {
+          right_mouse_command = "",
+          middle_mouse_command = "bdelete! %d",
+          diagnostics = "nvim_lsp",
+          diagnostics_update_in_insert = true
+        }
+      }
+    end
   }
 
   -- trouble

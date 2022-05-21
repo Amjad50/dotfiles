@@ -12,8 +12,8 @@ utils.kmap('n', '<right>', '<nop>', true)
 
 -- switch between tabs
 -- TODO:
-utils.kmap('', '<C-PageDown>', ':BufferNext<CR>', true, true)
-utils.kmap('', '<C-PageUp>', ':BufferPrevious<CR>', true, true)
+utils.kmap('', '<C-PageDown>', ':BufferLineCycleNext<CR>', true, true)
+utils.kmap('', '<C-PageUp>', ':BufferLineCyclePrev<CR>', true, true)
 -- " Switch between tabs
 -- noremap <silent> <C-PageDown> :BufferNext<CR>
 -- noremap <silent> <C-PageUp> :BufferPrevious<CR>
@@ -21,6 +21,8 @@ utils.kmap('', '<C-PageUp>', ':BufferPrevious<CR>', true, true)
 -- " Move/order tabs around
 -- noremap <silent> <A-PageDown> :BufferMoveNext<CR>
 -- noremap <silent> <A-PageUp> :BufferMovePrevious<CR>
+utils.kmap('', '<A-PageDown>', ':BufferLineMoveNext<CR>', true, true)
+utils.kmap('', '<A-PageUp>', ':BufferLineMovePrev<CR>', true, true)
 
 -- Switch between buffers
 utils.kmap('', '<C-Right>', ':bn<CR>', true)
