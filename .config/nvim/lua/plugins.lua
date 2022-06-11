@@ -42,6 +42,8 @@ return require('packer').startup(function()
   -- lsputil
   use 'RishabhRD/popfix'
   use 'RishabhRD/nvim-lsputils'
+  -- symbols
+  use 'simrat39/symbols-outline.nvim'
   -- rust-tools
   use {
       'simrat39/rust-tools.nvim',
