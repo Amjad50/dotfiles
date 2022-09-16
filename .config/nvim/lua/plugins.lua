@@ -38,12 +38,22 @@ return require('packer').startup(function()
   -- lsp
   use 'neovim/nvim-lspconfig'
   -- auto completion
-  use 'ms-jpq/coq_nvim'
+  -- use 'ms-jpq/coq_nvim'
+  use 'hrsh7th/cmp-buffer'
+  use 'hrsh7th/cmp-nvim-lsp'
+  use 'hrsh7th/cmp-nvim-lsp-signature-help'
+  use 'hrsh7th/cmp-path'
+  use 'hrsh7th/cmp-vsnip'
+  use 'hrsh7th/vim-vsnip'
+  --use 'hrsh7th/cmp-cmdline'
+  use 'hrsh7th/nvim-cmp'
   -- lsputil
   use 'RishabhRD/popfix'
   use 'RishabhRD/nvim-lsputils'
   -- symbols
   use 'simrat39/symbols-outline.nvim'
+  -- fold
+  use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
   -- rust-tools
   use {
       'simrat39/rust-tools.nvim',
@@ -155,7 +165,7 @@ return require('packer').startup(function()
           right_mouse_command = "",
           middle_mouse_command = "bdelete! %d",
           diagnostics = "nvim_lsp",
-          diagnostics_update_in_insert = true
+          diagnostics_update_in_insert = false 
         }
       }
     end

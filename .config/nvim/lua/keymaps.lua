@@ -79,14 +79,22 @@ utils.kmap('n', 'gp', '<cmd>lua require"gitsigns".preview_hunk()<CR>')
 -- 
 -- " PLUGIN: FZF
 utils.kmap('n', '<C-f>', '<cmd>lua require("telescope.builtin").find_files()<CR>', true, true)
+utils.kmap('n', '<C-p>', '<cmd>lua require("telescope.builtin").buffers()<CR>', true, true)
 utils.kmap('n', '<leader>st', '<cmd>lua require("telescope.builtin").git_status()<CR>', true, true)
-utils.kmap('n', '<leader>b', '<cmd>lua require("telescope.builtin").buffers()<CR>', true, true)
 utils.kmap('n', '<leader>f', '<cmd>lua require("telescope.builtin").live_grep()<CR>', true, true)
 
 utils.kmap('n', '<leader>g', '<cmd>lua require("telescope.builtin").git_commits()<CR>', true, true)
 utils.kmap('n', '<leader>gb', '<cmd>lua require("telescope.builtin").git_bcommits()<CR>', true, true)
 
-utils.kmap('n', '<leader>c', '<cmd>lua require("telescope.builtin").lsp_document_symbols()<CR>', true, true)
+utils.kmap('n', '<leader>c', '<cmd>lua require("telescope.builtin").lsp_document_symbols()<CR>', true, true) 
+
+-- folding
+utils.kmap('n', 'zm', ':foldopen<CR>', true, true)
+utils.kmap('n', 'zr', ':foldclose<CR>', true, true)
+utils.kmap('n', 'zM', '<cmd>lua require("ufo").openAllFolds()<CR>', true, true)
+utils.kmap('n', 'zR', '<cmd>lua require("ufo").closeAllFolds()<CR>', true, true)
+
+
 -- nnoremap <silent> <Leader>/ :BLines<CR>
 -- 
 -- nnoremap <silent> <Leader>hh :History<CR>
