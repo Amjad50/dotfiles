@@ -1,0 +1,47 @@
+[user]
+	name = Amjad Alsharafi
+	email = 26300843+Amjad50@users.noreply.github.com
+[core]
+	pager = delta
+	editor = nvim
+	filemode = false
+	autocrlf = input
+[delta]
+	navigate = true
+    side-by-side = false
+[alias]
+	st = status
+	ch = checkout
+	br = branch
+	logg = log --oneline --full-history --all --decorate --graph
+	d = diff
+	ds = diff --staged
+[difftool]
+	prompt = false
+[diff]
+	tool = nvimdiff
+	algorithm = histogram
+[difftool "nvimdiff"]
+	cmd = nvim -d $LOCAL $REMOTE
+[mergetool "vimdiff"]
+  cmd = nvim -d $BASE $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
+[init]
+	defaultBranch = master
+[commit]
+	gpgsign = true
+    verbose = true
+[gpg]
+	program = gpg
+[merge]
+	conflictstyle = diff3
+[color]
+	ui = auto
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[safe]
+	directory = /opt/flutter
+[protocol "file"]
+	allow = always
