@@ -18,4 +18,5 @@ else
     require('lsp')
 
     require('keymaps')
+
 end

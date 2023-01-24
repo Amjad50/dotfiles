@@ -26,6 +26,11 @@ return require('packer').startup(function()
       }
     end
   }
+  use {'nvim-treesitter/nvim-treesitter-context',
+    config = function()
+      require'treesitter-context'.setup {}
+    end
+  }
   -- provide current function
   use {
 	"SmiteshP/nvim-gps",
@@ -85,10 +90,7 @@ return require('packer').startup(function()
 
   -- colorschemes
   use 'Mofiqul/vscode.nvim'
-  -- use 'christianchiarulli/nvcode-color-schemes.vim'
-  -- use 'Th3Whit3Wolf/one-nvim'
-  use 'xiyaowong/nvim-transparent'
-
+  
   -- statusline
   use {'NTBBloodbath/galaxyline.nvim',
     requires = { "kyazdani42/nvim-web-devicons" },
@@ -137,6 +139,14 @@ return require('packer').startup(function()
     config = function()
       require('gitsigns').setup {
           keymaps = {},
+          current_line_blame = true,
+          current_line_blame_opts = {
+            virt_text = true,
+            virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
+            delay = 1000,
+            ignore_whitespace = true,
+          },
+          --current_line_blame_formatter = '<abbrev_sha> <author>, <author_time:%Y-%m-%d> - <summary>',
           --update_debounce = 700,
       }
     end
@@ -183,6 +193,33 @@ return require('packer').startup(function()
     end
   }
 
+  -- copilot
   use {'github/copilot.vim'}
+
+  -- movement
+  use {'ggandor/leap.nvim',
+    config = function()
+      local mappings = {
+          {{"n", "x", "o"}, "s",  "<Plug>(leap-forward-to)"},
+          {{"n", "x", "o"}, "S",  "<Plug>(leap-backward-to)"},
+          {{"x", "o"},      "m",  "<Plug>(leap-forward-till)"},
+          {{"x", "o"},      "M",  "<Plug>(leap-backward-till)"},
+          {{"n", "x", "o"}, ";;", "<Plug>(leap-cross-window)"}
+      }
+      for _, map in ipairs(mappings) do
+        local modes = map[1]
+        local lhs = map[2]
+        local rhs = map[3]
+        for _, mode in ipairs(modes) do
+          if force_3f 
+            or ((vim.fn.mapcheck(lhs, mode) == "")
+            and (vim.fn.hasmapto(rhs, mode) == 0))
+          then
+            vim.keymap.set(mode, lhs, rhs, {silent = true})
+          end
+        end
+      end
+    end
+  }
 
 end)

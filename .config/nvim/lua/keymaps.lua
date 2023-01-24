@@ -39,8 +39,8 @@ utils.kmap('n', 'cy',    '<cmd>lua require("telescope.builtin").type_definition(
 utils.kmap('n', 'cr',    '<cmd>lua require("telescope.builtin").lsp_references()<CR>', true, true)
 
 -- lsp diagnostics
-utils.kmap('n', '[c', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', true, true)
-utils.kmap('n', ']c', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', true, true)
+utils.kmap('n', '[c', '<cmd>lua vim.diagnostic.goto_prev()<CR>', true, true)
+utils.kmap('n', ']c', '<cmd>lua vim.diagnostic.goto_next()<CR>', true, true)
 
 -- lsp renaming
 utils.kmap('n', '<leader>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', true, true)

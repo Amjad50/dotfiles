@@ -40,7 +40,7 @@ capabilities.textDocument.foldingRange = {
     dynamicRegistration = false,
     lineFoldingOnly = true
 }
-local capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+local capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 lspconfig.pyright.setup {
     capabilities = capabilities,
@@ -69,5 +69,5 @@ vim.o.foldcolumn = '1'
 vim.o.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
 vim.o.foldlevelstart = 99
 vim.o.foldenable = true
-require('ufo').setup()
+-- require('ufo').setup()
 
