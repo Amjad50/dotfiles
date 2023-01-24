@@ -340,8 +340,8 @@ setopt autocd
 setopt inc_append_history
 setopt share_history
 
-export SAVEHIST=10000
-export HISTSIZE=10000
+export SAVEHIST=100000
+export HISTSIZE=100000
 export HISTFILE=~/.zsh_history
 
 ZSH_AUTOSUGGEST_STRATEGY=(history completion )
@@ -380,6 +380,20 @@ source /usr/share/doc/git-extras/git-extras-completion.zsh
 
 # TODO: edit location of the statement for better organization
 alias dotfiles='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+
+create_dotfiles() {
+    if [ $(dotfiles status > /dev/null 2>&1) -eq 0 ]; then
+        echo "dotfiles is already initialized"
+        return
+    fi
+
+    git init --bare $HOME/.dotfiles
+    dotfiles config --local status.showUntrackedFiles no
+    dotfiles remote add origin git@github.com:Amjad50/dotfiles.git
+
+    echo "dotfiles initialized"
+    echo "please pull by running 'dotfiles pull'"
+}
 
 export BAT_PAGER="less -RF"
 
