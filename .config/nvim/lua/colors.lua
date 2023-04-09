@@ -9,7 +9,9 @@
 vim.o.background = "dark"
 
 local c = require('vscode.colors')
-require('vscode').setup({
+local vscode = require('vscode')
+
+vscode.setup({
     -- Enable transparent background
     transparent = true,
 
@@ -31,5 +33,6 @@ require('vscode').setup({
         Cursor = { fg=c.vscDarkBlue, bg=c.vscLightGreen, bold=true },
     }
 })
+vscode.load()
 
 vim.api.nvim_set_hl(0, 'NonText', { fg = '#808080', bg = c.vscNone })
