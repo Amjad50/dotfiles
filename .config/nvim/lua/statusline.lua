@@ -1,4 +1,4 @@
-local gps = require("nvim-gps")
+local navic = require("nvim-navic")
 
 local gl = require("galaxyline")
 local colors = require("galaxyline.themes.colors")["doom-one"]
@@ -129,10 +129,10 @@ gls.left[10] = {
 gls.left[11] = {
   CurrentFunction = {
     provider = function()
-        return gps.get_location()
+        return navic.get_location()
     end,
     condition = function()
-        return condition.hide_in_width() and gps.is_available()
+        return condition.hide_in_width() and navic.is_available()
     end,
     icon = " ",
     separator = " ",

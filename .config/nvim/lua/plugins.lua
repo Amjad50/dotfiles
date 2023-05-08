@@ -33,11 +33,8 @@ return require('packer').startup(function()
   }
   -- provide current function
   use {
-	"SmiteshP/nvim-gps",
-	requires = "nvim-treesitter/nvim-treesitter",
-    config = function()
-        require'nvim-gps'.setup()
-    end
+    "SmiteshP/nvim-navic",
+    requires = "neovim/nvim-lspconfig"
   }
 
   -- lsp

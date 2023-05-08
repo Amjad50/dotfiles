@@ -1,7 +1,14 @@
 require("fidget").setup{}
 local cmp = require("cmp")
+local navic = require("nvim-navic")
 
 local lspconfig = require('lspconfig')
+
+local on_attach = function(client, bufnr)
+    if client.server_capabilities.documentSymbolProvider then
+        navic.attach(client, bufnr)
+    end
+end
 
 cmp.setup {
   snippet = {
@@ -37,32 +44,37 @@ cmp.setup {
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities.textDocument.completion.completionItem.snippetSupport = true
 capabilities.textDocument.foldingRange = {
-    dynamicRegistration = false,
-    lineFoldingOnly = true
+  dynamicRegistration = false,
+  lineFoldingOnly = true
 }
 local capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 lspconfig.pyright.setup {
-    capabilities = capabilities,
+  capabilities = capabilities,
+  on_attach = on_attach,
 }
 require('rust-tools').setup {
-    server = {
-        capabilities = capabilities,
-    }
+  server = {
+    capabilities = capabilities,
+    on_attach = on_attach,
+  }
 }
 lspconfig.omnisharp.setup {
   cmd = { "/usr/bin/mono", "/usr/lib/omnisharp/OmniSharp.exe", "--languageserver" , "--hostPID", tostring(vim.fn.getpid()), "-z" };
   root_dir = lspconfig.util.root_pattern("*.sln");
+  on_attach = on_attach,
 }
 lspconfig.clangd.setup {
   capabilities = capabilities,
+  on_attach = on_attach,
 }
 lspconfig.julials.setup {
   capabilities = capabilities,
+  on_attach = on_attach,
 }
 
 -- format on save
-vim.cmd [[autocmd BufWritePre * lua vim.lsp.buf.formatting_sync()]]
+vim.cmd [[autocmd BufWritePre * lua vim.lsp.buf.format()]]
 
 -- enable fold
 vim.o.foldcolumn = '1'
