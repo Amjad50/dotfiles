@@ -30,6 +30,9 @@ fi
 if [ -d "$HOME/.cargo/bin" ] ;
   then PATH="$HOME/.cargo/bin:$PATH"
 fi
+if [ -d "$HOME/Android/flutter" ] ;
+  then PATH="$HOME/Android/flutter/bin:$PATH"
+fi
 
 #list
 alias ls='ls --color=auto'
