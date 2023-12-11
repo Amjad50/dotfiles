@@ -50,7 +50,7 @@ vim.opt.updatetime = 200
 
 vim.opt.listchars = 'nbsp:¬,extends:»,precedes:«,trail:•'
 
-vim.opt.colorcolumn = '80'
+--vim.opt.colorcolumn = '80'
 
 vim.opt.mouse = 'a'
 

@@ -53,13 +53,23 @@ return require('packer').startup(function()
   use 'RishabhRD/popfix'
   use 'RishabhRD/nvim-lsputils'
   -- symbols
-  use 'simrat39/symbols-outline.nvim'
+  use {
+    'simrat39/symbols-outline.nvim',
+    config = function()
+      require'symbols-outline'.setup{}
+    end
+  }
   -- fold
   use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
   -- rust-tools
   use {
       'simrat39/rust-tools.nvim',
       requires = {'nvim-lua/plenary.nvim'}
+  }
+  use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"},
+    config = function()
+        require("dapui").setup()
+    end
   }
   -- lsp status
   use {
@@ -120,7 +130,7 @@ return require('packer').startup(function()
         require('telescope').setup {
             defaults = {
                 path_display = {
-                    smart = {}
+                    shorten = {len=5}
                 }
             },
             extensions = {
@@ -135,7 +145,7 @@ return require('packer').startup(function()
     requires = { {'nvim-lua/plenary.nvim'} },
     config = function()
       require('gitsigns').setup {
-          keymaps = {},
+          -- keymaps = {},
           current_line_blame = true,
           current_line_blame_opts = {
             virt_text = true,
