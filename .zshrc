@@ -375,11 +375,13 @@ rga-fzf() {
 }
 
 # fzf
-source /usr/share/fzf/key-bindings.zsh
-source /usr/share/fzf/completion.zsh
+[[ ! -f /usr/share/fzf/key-bindings.zsh ]] || source /usr/share/fzf/key-bindings.zsh
+[[ ! -f /usr/share/doc/fzf/examples/key-bindings.zsh ]] || source /usr/share/doc/fzf/examples/key-bindings.zsh 
+[[ ! -f /usr/share/fzf/completion.zsh ]] || source /usr/share/fzf/completion.zsh
+[[ ! -f /usr/share/doc/fzf/examples/completion.zsh ]] || source /usr/share/doc/fzf/examples/completion.zsh 
 
 # git-extras
-source /usr/share/doc/git-extras/git-extras-completion.zsh
+[[ ! -f /usr/share/doc/git-extras/git-extras-completion.zsh ]] || source /usr/share/doc/git-extras/git-extras-completion.zsh
 
 # TODO: edit location of the statement for better organization
 alias dotfiles='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
@@ -400,9 +402,11 @@ create_dotfiles() {
 
 export BAT_PAGER="less -RF"
 
+unalias zi  # fix to get it working since zoxide depend on this
 eval "$(zoxide init zsh)"
 
 export QSYS_ROOTDIR="/home/amjad/.cache/paru/clone/quartus-free/pkg/quartus-free-quartus/opt/intelFPGA/21.1/quartus/sopc_builder/bin"
 
 
+[[ ! -f /usr/share/doc/pkgfile/command-not-found.zsh ]] || source /usr/share/doc/pkgfile/command-not-found.zsh
 
