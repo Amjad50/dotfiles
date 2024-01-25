@@ -34,6 +34,12 @@ utils.kmap('', '<C-h>', ':nohlsearch<CR>', true, true)
 -- lsp navigation
 utils.kmap('n', 'cd',    '<cmd>lua require("telescope.builtin").lsp_definitions()<CR>', true, true)
 utils.kmap('n', '<C-j>', '<cmd>lua vim.lsp.buf.hover()<CR>', true, true)
+vim.keymap.set('n', '<C-j>', function()
+    local winid = require("ufo").peekFoldedLinesUnderCursor()
+    if not winid then
+        vim.lsp.buf.hover()
+    end
+end)
 utils.kmap('n', 'ci',    '<cmd>lua require("telescope.builtin").lsp_implementations()<CR>', true, true)
 utils.kmap('n', 'cy',    '<cmd>lua require("telescope.builtin").type_definition()<CR>', true, true)
 utils.kmap('n', 'cr',    '<cmd>lua require("telescope.builtin").lsp_references()<CR>', true, true)
