@@ -86,11 +86,8 @@ return require('packer').startup(function()
       require'ufo'.setup{}
     end
   }
-  -- rust-tools
-  use {
-      'simrat39/rust-tools.nvim',
-      requires = {'nvim-lua/plenary.nvim'}
-  }
+  use { 'mrcjkb/rustaceanvim', requires = {"lvimuser/lsp-inlayhints.nvim"} }
+
   use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"},
     config = function()
         require("dapui").setup()

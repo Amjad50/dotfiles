@@ -53,11 +53,25 @@ lspconfig.pyright.setup {
   capabilities = capabilities,
   on_attach = on_attach,
 }
-require('rust-tools').setup {
+vim.g.rustaceanvim = {
+  inlay_hints = {
+    highlight = "NonText",
+  },
+  tools = {
+    hover_actions = {
+      auto_focus = true,
+    },
+    enable_clippy = false,
+  },
   server = {
+    on_attach = function(client, bufnr)
+      require("lsp-inlayhints").setup()
+      require("lsp-inlayhints").on_attach(client, bufnr)
+      on_attach(client, bufnr)
+    end,
     capabilities = capabilities,
-    on_attach = on_attach,
-  }
+    load_vscode_settings = true,
+  },
 }
 lspconfig.omnisharp.setup {
   cmd = { "/usr/bin/mono", "/usr/lib/omnisharp/OmniSharp.exe", "--languageserver" , "--hostPID", tostring(vim.fn.getpid()), "-z" };
