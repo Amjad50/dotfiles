@@ -18,7 +18,7 @@ return require('packer').startup(function()
     run = ':TSUpdate',
     config = function()
       require'nvim-treesitter.configs'.setup {
-        ensure_installed = {"rust", "python", "vim", "lua", "glsl", "cpp"},
+        ensure_installed = {"rust", "python", "vim", "lua", "glsl", "cpp", "swift", "zig"},
         highlight = {
           enable = true,
           additional_vim_regex_highlighting = false,
@@ -88,11 +88,11 @@ return require('packer').startup(function()
   }
   use { 'mrcjkb/rustaceanvim', requires = {"lvimuser/lsp-inlayhints.nvim"} }
 
-  use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"},
-    config = function()
-        require("dapui").setup()
-    end
-  }
+  -- use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"},
+  --   config = function()
+  --       require("dapui").setup()
+  --   end
+  -- }
   -- lsp status
   use {
     'j-hui/fidget.nvim',
@@ -195,7 +195,7 @@ return require('packer').startup(function()
 
   -- bufferline
   use {'akinsho/bufferline.nvim',
-    tag = "v2.*",
+    tag = "v4.*",
     requires = 'kyazdani42/nvim-web-devicons',
     config = function()
       vim.opt.termguicolors = true
@@ -221,9 +221,6 @@ return require('packer').startup(function()
       }
     end
   }
-
-  -- copilot
-  use {'github/copilot.vim'}
 
   -- movement
   use {'ggandor/leap.nvim',
