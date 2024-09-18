@@ -1,47 +1,49 @@
+[include]
+    # private config not committed (crate your own)
+    path = ~/.gitconfig.local
 [user]
-	name = Amjad Alsharafi
-	email = 26300843+Amjad50@users.noreply.github.com
+    name = Amjad Alsharafi
+    email = 26300843+Amjad50@users.noreply.github.com
+[format]
+    signOff = true
 [core]
-	pager = delta
-	editor = nvim
-	filemode = false
-	autocrlf = input
+    pager = delta
+    editor = nvim
+    filemode = false
+    autocrlf = input
 [delta]
-	navigate = true
+    navigate = true
     side-by-side = false
 [alias]
-	st = status
-	ch = checkout
-	br = branch
-	logg = log --oneline --full-history --all --decorate --graph
-	d = diff
-	ds = diff --staged
+    st = status
+    ch = checkout
+    br = branch
+    logg = log --oneline --full-history --all --decorate --graph
+    d = diff
+    ds = diff --staged
 [difftool]
-	prompt = false
+    prompt = false
 [diff]
-	tool = nvimdiff
-	algorithm = histogram
+    tool = nvimdiff
+    algorithm = histogram
 [difftool "nvimdiff"]
-	cmd = nvim -d $LOCAL $REMOTE
+    cmd = nvim -d $LOCAL $REMOTE
 [mergetool "vimdiff"]
-  cmd = nvim -d $BASE $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
+    cmd = nvim -d $BASE $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
 [init]
-	defaultBranch = master
+    defaultBranch = master
 [commit]
-	gpgsign = true
+    gpgsign = true
     verbose = true
 [gpg]
-	program = gpg
+    program = gpg
 [merge]
-	conflictstyle = diff3
+    conflictstyle = diff3
 [color]
-	ui = auto
+    ui = auto
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
-[safe]
-	directory = /opt/flutter
-[protocol "file"]
-	allow = always
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
+
