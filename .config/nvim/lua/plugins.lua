@@ -193,6 +193,17 @@ return require('packer').startup(function()
   -- rust
   --use {'rust-lang/rust.vim'}
 
+  -- web
+
+  use{'MunifTanjim/prettier.nvim',
+    config = function()
+      require("prettier").setup()
+    end
+  }
+
+  -- AI
+  use {'github/copilot.vim'}
+
   -- bufferline
   use {'akinsho/bufferline.nvim',
     tag = "v4.*",

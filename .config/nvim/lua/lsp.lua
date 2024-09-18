@@ -49,10 +49,6 @@ capabilities.textDocument.foldingRange = {
 }
 local capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
-lspconfig.pyright.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
 vim.g.rustaceanvim = {
   inlay_hints = {
     highlight = "NonText",
@@ -73,25 +69,16 @@ vim.g.rustaceanvim = {
     load_vscode_settings = true,
   },
 }
+local servers = {"pyright", "clangd", "julials", "sourcekit", "zls", "tsserver", "tailwindcss", "eslint"}
+for _, lsp in ipairs(servers) do
+  lspconfig[lsp].setup {
+    capabilities = capabilities,
+    on_attach = on_attach,
+  }
+end
 lspconfig.omnisharp.setup {
   cmd = { "/usr/bin/mono", "/usr/lib/omnisharp/OmniSharp.exe", "--languageserver" , "--hostPID", tostring(vim.fn.getpid()), "-z" };
   root_dir = lspconfig.util.root_pattern("*.sln");
-  on_attach = on_attach,
-}
-lspconfig.clangd.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
-lspconfig.julials.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
-lspconfig.sourcekit.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
-lspconfig.zls.setup {
-  capabilities = capabilities,
   on_attach = on_attach,
 }
 
