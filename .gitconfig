@@ -11,6 +11,7 @@
     editor = nvim
     filemode = false
     autocrlf = input
+    hooksPath = ~/.githooks
 [delta]
     navigate = true
     side-by-side = false
@@ -35,6 +36,8 @@
 [commit]
     gpgsign = true
     verbose = true
+[tag]
+    gpgSign = true
 [gpg]
     program = gpg
 [merge]
