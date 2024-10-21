@@ -69,7 +69,7 @@ vim.g.rustaceanvim = {
     load_vscode_settings = true,
   },
 }
-local servers = {"pyright", "clangd", "julials", "sourcekit", "zls", "ts_ls", "tailwindcss", "eslint"}
+local servers = {"pyright", "clangd", "julials", "zls", "ts_ls", "tailwindcss", "eslint"}
 for _, lsp in ipairs(servers) do
   lspconfig[lsp].setup {
     capabilities = capabilities,
