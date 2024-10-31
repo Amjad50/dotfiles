@@ -30,8 +30,8 @@ fi
 if [ -d "$HOME/.cargo/bin" ] ;
   then PATH="$HOME/.cargo/bin:$PATH"
 fi
-if [ -d "$HOME/Android/flutter" ] ;
-  then PATH="$HOME/Android/flutter/bin:$PATH"
+if [ -d "$HOME/Flutter/flutter" ] ;
+  then PATH="$HOME/Flutter/flutter/bin:$PATH"
 fi
 
 #list
@@ -232,6 +232,9 @@ alias bls="betterlockscreen -u /usr/share/backgrounds/arcolinux/"
 #give the list of all installed desktops - xsessions desktops
 alias xd="ls /usr/share/xsessions"
 
+#alias ls="exa"
+#alias cd="z"
+
 # # ex = EXtractor for all kinds of archives
 # # usage: ex <file>
 ex ()
@@ -405,8 +408,31 @@ export BAT_PAGER="less -RF"
 unalias zi  # fix to get it working since zoxide depend on this
 eval "$(zoxide init zsh)"
 
-export QSYS_ROOTDIR="/home/amjad/.cache/paru/clone/quartus-free/pkg/quartus-free-quartus/opt/intelFPGA/21.1/quartus/sopc_builder/bin"
+export QSYS_ROOTDIR="/home/amjad/.cache/paru/clone/quartus-free/pkg/quartus-free-quartus/opt/intelFPGA/23.1/quartus/sopc_builder/bin"
 
 
 [[ ! -f /usr/share/doc/pkgfile/command-not-found.zsh ]] || source /usr/share/doc/pkgfile/command-not-found.zsh
+
+if [ -d "$HOME/.modular" ]; then
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib/mojo"
+    export PATH="$PATH:$HOME/.modular/pkg/packages.modular.com_mojo/bin/"
+    export MODULAR_HOME="$HOME/.modular"
+    export LD_LIBRARY_PATH=/home/amjad/.local/lib/arch-mojo:$LD_LIBRARY_PATH
+fi
+
+# Swift
+if [ command -v swift > /dev/null 2>&1 ]; then
+    eval $(swift package completion-tool generate-zsh-script)
+fi
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/opt/google-cloud-cli/path.zsh.inc' ]; then . '/opt/google-cloud-cli/path.zsh.inc'; fi
+# The next line enables shell command completion for gcloud.
+if [ -f '/opt/google-cloud-cli/completion.zsh.inc' ]; then . '/opt/google-cloud-cli/completion.zsh.inc'; fi
+
+# mesa vulkan
+export AMD_VULKAN_ICD=RADV
+
+# enable GPG on this tty (used when using ncurses UI for gpg)
+export GPG_TTY=$(tty)
 
