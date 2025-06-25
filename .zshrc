@@ -33,6 +33,9 @@ fi
 if [ -d "$HOME/Flutter/flutter" ] ;
   then PATH="$HOME/Flutter/flutter/bin:$PATH"
 fi
+if [ -d "$HOME/.bun/bin" ] ;
+  then PATH="$HOME/.bun/bin:$PATH"
+fi
 
 #list
 alias ls='ls --color=auto'
@@ -436,3 +439,12 @@ export AMD_VULKAN_ICD=RADV
 # enable GPG on this tty (used when using ncurses UI for gpg)
 export GPG_TTY=$(tty)
 
+# for yazi
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	yazi "$@" --cwd-file="$tmp"
+	if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+		builtin cd -- "$cwd"
+	fi
+	rm -f -- "$tmp"
+}
