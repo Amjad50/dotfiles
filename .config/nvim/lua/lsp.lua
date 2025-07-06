@@ -81,6 +81,31 @@ lspconfig.omnisharp.setup {
   root_dir = lspconfig.util.root_pattern("*.sln");
   on_attach = on_attach,
 }
+lspconfig.nixd.setup({
+   capabilities = capabilities,
+   on_attach = on_attach,
+   cmd = { "nixd" },
+   settings = {
+      nixd = {
+         nixpkgs = {
+            expr = "import (builtins.getFlake \"/home/amjad/Development/Nix\").inputs.nixpkgs { }"
+            -- expr = "import <nixpkgs> { }",
+         },
+         formatting = {
+            command = { "nixfmt" },
+         },
+         options = {
+            nixos = {
+               -- expr = '(builtins.getFlake ("git+file://" + toString ./.)).nixosConfigurations.k-on.options',
+               expr = "(builtins.getFlake \"/home/amjad/Development/Nix\").nixosConfigurations.myserver.options"
+            },
+            -- home_manager = {
+            --    expr = '(builtins.getFlake ("git+file://" + toString ./.)).homeConfigurations."ruixi@k-on".options',
+            -- },
+         },
+      },
+   },
+})
 
 -- format on save
 vim.cmd [[autocmd BufWritePre * lua vim.lsp.buf.format()]]

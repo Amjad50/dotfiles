@@ -1,0 +1,61 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run the `open default settings` command
+// from the command palette or from `Zed` application menu.
+{
+  "edit_predictions": {
+    "mode": "eager",
+    "copilot": {
+      "proxy": null,
+      "proxy_no_verify": null
+    },
+    "enabled_in_text_threads": false
+  },
+  "agent": {
+    "model_parameters": [],
+    "default_model": {
+      "provider": "zed.dev",
+      "model": "claude-sonnet-4-latest"
+    },
+    "version": "2"
+  },
+  "ssh_connections": [
+    {
+      "host": "g2office",
+      "projects": [
+        {
+          "paths": ["~/vk_video_samples"]
+        }
+      ]
+    }
+  ],
+  "features": {
+    "edit_prediction_provider": "zed"
+  },
+  "base_keymap": "VSCode",
+  "show_edit_predictions": true,
+  "theme": "One Dark",
+  "ui_font_size": 16,
+  "buffer_font_size": 16,
+  "lsp": {
+    "pyright": {
+      "settings": {
+        "python": {
+          "venvPath": ".venv",
+          "pythonPath": ".venv/bin/python"
+        }
+      }
+    },
+    "rust_analyzer": {
+      "initialization_options": {
+        "check": {
+          "command": "clippy"
+        }
+      }
+    }
+  }
+}

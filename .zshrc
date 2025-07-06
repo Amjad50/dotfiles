@@ -36,6 +36,9 @@ fi
 if [ -d "$HOME/.bun/bin" ] ;
   then PATH="$HOME/.bun/bin:$PATH"
 fi
+if [ -d "/nix/var/nix/profiles/default/bin" ] ;
+  then PATH="/nix/var/nix/profiles/default/bin:$PATH"
+fi
 
 #list
 alias ls='ls --color=auto'
