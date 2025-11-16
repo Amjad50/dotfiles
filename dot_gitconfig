@@ -1,0 +1,57 @@
+[alias]
+	br = "branch"
+	c = "commit -s"
+	ca = "commit -sa"
+	ch = "checkout"
+	cm = "commit -sm"
+	d = "diff"
+	ds = "diff --staged"
+	logg = "log --oneline --full-history --all --decorate --graph"
+	st = "status"
+
+[color]
+	ui = "auto"
+
+[commit]
+	gpgSign = true
+	verbose = true
+
+[core]
+	autocrlf = "input"
+	editor = "nvim"
+	filemode = false
+	pager = "delta"
+
+[delta]
+	navigate = true
+	pager = "less -RF"
+	sideBySide = false
+
+[diff]
+	algorithm = "histogram"
+	tool = "nvimdiff"
+
+[filter "lfs"]
+	clean = "git-lfs clean -- %f"
+	process = "git-lfs filter-process"
+	required = true
+	smudge = "git-lfs smudge -- %f"
+
+[format]
+	signOff = true
+
+[init]
+	defaultBranch = "master"
+
+[interactive]
+	diffFilter = "delta --color-only"
+
+[merge]
+	conflictstyle = "diff3"
+
+[tag]
+	gpgSign = true
+
+[user]
+	email = "26300843+Amjad50@users.noreply.github.com"
+	name = "Amjad Alsharafi"

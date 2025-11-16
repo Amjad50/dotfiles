@@ -5,3 +5,5 @@ packages:
     - ripgrep
     - neovim
     - fd-find
+    - delta
+    - git-lfs

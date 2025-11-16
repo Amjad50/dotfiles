@@ -1,0 +1,21 @@
+[aliases]
+d = ["diff"]
+
+[git]
+sign-on-push = true
+
+[signing]
+backend = "gpg"
+behavior = "own"
+
+[templates]
+commit_trailers = "format_signed_off_by_trailer(self)"
+
+[ui]
+diff-formatter = ":git"
+pager = "delta"
+show-cryptographic-signatures = true
+
+[user]
+email = "26300843+Amjad50@users.noreply.github.com"
+name = "Amjad Alsharafi"
