@@ -7,3 +7,4 @@ packages:
     - fd-find
     - delta
     - git-lfs
+    - pinentry-qt
