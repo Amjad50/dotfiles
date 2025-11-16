@@ -1,0 +1,12 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/bin/bash
+# ============================================================================
+# Install packages from Fedora via DNF
+# This script runs automatically when package list changes
+# ============================================================================
+
+echo "→ Installing packages from Fedora..."
+sudo dnf install -y {{ join " " .packages.dnf }}
+
+echo "✅ Package installation complete"
+{{ end -}}

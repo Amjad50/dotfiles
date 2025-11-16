@@ -1,0 +1,7 @@
+packages:
+  dnf:
+    - uv
+    - bun
+    - ripgrep
+    - neovim
+    - fd-find
