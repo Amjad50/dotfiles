@@ -1,12 +1,27 @@
 {{ if eq .chezmoi.os "linux" -}}
 #!/bin/bash
 # ============================================================================
-# Install packages from Fedora via DNF
-# This script runs automatically when package list changes
+# Add repositories and install packages from Fedora (DNF) and Flatpak
+# This script runs automatically when package lists change
 # ============================================================================
 
-echo "→ Installing packages from Fedora..."
+# Get Fedora version
+FEDORA_VER=$(rpm -E %fedora)
+
+{{ if .repositories.fedora -}}
+echo "→ Adding custom repositories..."
+{{ range .repositories.fedora -}}
+sudo dnf config-manager addrepo --from-repofile={{ . }}
+{{ end -}}
+{{ end -}}
+
+echo "→ Installing packages from Fedora via DNF..."
 sudo dnf install -y {{ join " " .packages.dnf }}
+
+{{ if .packages.flatpak -}}
+echo "→ Installing Flatpak packages..."
+flatpak install -y flathub {{ join " " .packages.flatpak }}
+{{ end -}}
 
 echo "✅ Package installation complete"
 {{ end -}}

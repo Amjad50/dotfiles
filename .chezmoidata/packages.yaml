@@ -1,3 +1,7 @@
+repositories:
+  fedora:
+    - https://download.opensuse.org/repositories/home:/mkittler/Fedora_$FEDORA_VER/home:mkittler.repo
+
 packages:
   dnf:
     # Core development tools
@@ -6,6 +10,7 @@ packages:
     - delta
     - git-extras
     - neovim
+    - direnv
 
     # Shell utilities
     - ripgrep
@@ -15,6 +20,7 @@ packages:
 
     # Development
     - typst
+    - mold
 
     # Networking
     - bind-utils
@@ -23,5 +29,15 @@ packages:
     # Other
     - git-lfs
     - pinentry-qt
-
+    - syncthing
+    - syncthingtray
     - btrfs-assistant
+
+    # Fonts
+    - google-noto-color-emoji-fonts
+    - google-noto-sans-fonts
+    - google-noto-mono-fonts
+
+  flatpak:
+    - io.beekeeperstudio.Studio
+    - com.getmailspring.Mailspring
