@@ -1,0 +1,336 @@
+#!/bin/zsh
+# ============================================================================
+# ZSH Configuration with Zinit Plugin Manager
+# ============================================================================
+
+# ============================================================================
+# 1. ZINIT INITIALIZATION
+# ============================================================================
+
+# Install Zinit if not already installed
+if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
+    print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
+    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
+    command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
+        print -P "%F{33} %F{34}Installation successful.%f%b" || \
+        print -P "%F{160} The clone has failed.%f%b"
+fi
+
+# Source Zinit
+source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
+
+# Load important Zinit annexes
+zinit light-mode for \
+    zdharma-continuum/zinit-annex-as-monitor \
+    zdharma-continuum/zinit-annex-bin-gem-node \
+    zdharma-continuum/zinit-annex-patch-dl \
+    zdharma-continuum/zinit-annex-rust
+
+# ============================================================================
+# 2. CORE ZSH OPTIONS & KEYBINDINGS
+# ============================================================================
+
+typeset -U path cdpath fpath manpath
+
+# Use emacs keymap as the default
+bindkey -e
+
+# Delete key support
+bindkey "^[[3~" delete-char
+
+# History substring search keybindings
+bindkey "^[[A" history-substring-search-up
+bindkey "^[OA" history-substring-search-up
+bindkey "^[[B" history-substring-search-down
+bindkey "^[OB" history-substring-search-down
+
+# ============================================================================
+# 3. HISTORY CONFIGURATION
+# ============================================================================
+
+HISTSIZE="100000"
+SAVEHIST="100000"
+HISTFILE="$HOME/.zsh_history"
+mkdir -p "$(dirname "$HISTFILE")"
+
+setopt HIST_FCNTL_LOCK
+setopt APPEND_HISTORY
+setopt HIST_IGNORE_DUPS
+unsetopt HIST_IGNORE_ALL_DUPS
+unsetopt HIST_SAVE_NO_DUPS
+unsetopt HIST_FIND_NO_DUPS
+setopt HIST_IGNORE_SPACE
+unsetopt HIST_EXPIRE_DUPS_FIRST
+setopt SHARE_HISTORY
+unsetopt EXTENDED_HISTORY
+setopt autocd
+
+# ============================================================================
+# 4. COMPLETION SETUP
+# ============================================================================
+
+autoload -U compinit && compinit
+autoload -U bashcompinit && bashcompinit
+
+# ============================================================================
+# 5. ZINIT PLUGINS - SYNTAX & HISTORY
+# ============================================================================
+
+# Syntax highlighting - must be loaded before history-substring-search
+zinit light zsh-users/zsh-syntax-highlighting
+
+# History substring search
+zinit light zsh-users/zsh-history-substring-search
+
+# Auto-suggestions (optional, uncomment if desired)
+zinit light zsh-users/zsh-autosuggestions
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+# ============================================================================
+# 6. PROGRAMS using ZINIT
+# ============================================================================
+
+# Zoxide (z command replacement)
+zinit ice as"command" from"gh-r"
+zinit light ajeetdsouza/zoxide
+
+eval "$(zoxide init zsh)"
+
+# junegunn/fzf-bin
+zinit ice from"gh-r" as"program"
+zinit light junegunn/fzf
+
+if [[ $options[zle] = on ]]; then
+    source <(fzf --zsh)
+fi
+
+# sharkdp/fd
+zinit ice as"command" from"gh-r" mv"fd* -> fd" pick"fd/fd"
+zinit light sharkdp/fd
+
+# sharkdp/bat
+zinit ice as"command" from"gh-r" mv"bat* -> bat" pick"bat/bat"
+zinit light sharkdp/bat
+
+# ogham/exa, replacement for ls
+zinit ice wait"2" lucid from"gh-r" as"program" mv"exa* -> exa"
+zinit light ogham/exa
+
+# All of the above using the for-syntax and also z-a-bin-gem-node annex
+zinit wait"1" lucid from"gh-r" as"null" for \
+     sbin"fzf"          junegunn/fzf \
+     sbin"**/fd"        @sharkdp/fd \
+     sbin"**/bat"       @sharkdp/bat \
+     sbin"**/exa"       ogham/exa
+
+
+# ============================================================================
+# 7. THEME - POWERLEVEL10K
+# ============================================================================
+
+# Powerlevel10k theme (fast prompt theme)
+zinit ice depth=1
+zinit light romkatv/powerlevel10k
+
+# Load p10k configuration if it exists
+[[ ! -f $HOME/.p10k.zsh ]] || source $HOME/.p10k.zsh
+
+# ============================================================================
+# 8. ENVIRONMENT VARIABLES & EXTERNAL TOOLS
+# ============================================================================
+
+export GPG_TTY=$TTY
+
+# Direnv integration (for directory-specific environments)
+eval "$(direnv hook zsh)"
+
+# ============================================================================
+# 9. ALIASES
+# ============================================================================
+
+alias -- ..='cd ..'
+alias -- cd=z
+alias -- cd..='cd ..'
+alias -- df='df -h'
+alias -- egrep='egrep --color=auto'
+alias -- fgrep='fgrep --color=auto'
+alias -- free='free -mt'
+alias -- grep='grep --color=auto'
+alias -- jctl='journalctl -p 3 -xb'
+alias -- l=ls
+alias -- l.='ls -A | egrep '\''^\.'\'''
+alias -- la='ls -a'
+alias -- ll='ls -lah'
+alias -- ls='ls --color=auto'
+alias -- pdw=pwd
+alias -- psa='ps auxf'
+alias -- psgrep='ps aux | grep -v grep | grep -i -e VSZ -e'
+alias -- rg='rg --sort path'
+alias -- sr='sudo reboot'
+alias -- ssn='sudo shutdown now'
+alias -- userlist='cut -d: -f1 /etc/passwd'
+alias -- vimdiff='nvim -d'
+alias -- wget='wget -c'
+
+# ============================================================================
+# 10. CUSTOM HELPER FUNCTIONS
+# ============================================================================
+
+# Yazi file manager with cd integration
+y() {
+  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+  yazi "$@" --cwd-file="$tmp"
+  if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+    builtin cd -- "$cwd"
+  fi
+  rm -f -- "$tmp"
+}
+
+# Python virtual environment activation
+activate_venv() {
+  if [ -n "$1" ]; then
+    if [ -f "$1/bin/activate" ]; then
+      # shellcheck disable=SC1090
+      source "$1/bin/activate"
+      echo "✅ Activated virtualenv: $1"
+      return 0
+    else
+      echo "❌ '$1' is not a valid virtualenv folder"
+      return 1
+    fi
+  fi
+
+  for d in venv .venv ve .ve; do
+    if [ -f "$d/bin/activate" ]; then
+      # shellcheck disable=SC1090
+      source "$d/bin/activate"
+      echo "✅ Activated virtualenv: $d"
+      return 0
+    fi
+  done
+
+  echo "❌ No virtualenv found (checked: venv .venv ve .ve)"
+  return 1
+}
+
+# Extract archives automatically
+ex() {
+  if [ -f $1 ]; then
+    case $1 in
+      *.tar.bz2)   tar xjf $1   ;;
+      *.tar.gz)    tar xzf $1   ;;
+      *.bz2)       bunzip2 $1   ;;
+      *.rar)       unrar x $1   ;;
+      *.gz)        gunzip $1    ;;
+      *.tar)       tar xf $1    ;;
+      *.tbz2)      tar xjf $1   ;;
+      *.tgz)       tar xzf $1   ;;
+      *.zip)       unzip $1     ;;
+      *.Z)         uncompress $1;;
+      *.7z)        7z x $1      ;;
+      *.deb)       ar x $1      ;;
+      *.tar.xz)    tar xf $1    ;;
+      *.tar.zst)   tar xf $1    ;;
+      *)           echo "'$1' cannot be extracted via ex()" ;;
+    esac
+  else
+    echo "'$1' is not a valid file"
+  fi
+}
+
+# Ripgrep + FZF integration for file search
+rga-fzf() {
+  RG_PREFIX="rga --files-with-matches"
+  local file
+  file="$(
+    FZF_DEFAULT_COMMAND="$RG_PREFIX '$1'" \
+      fzf --sort --preview="[[ ! -z {} ]] && rga --pretty --context 5 {q} {}" \
+        --phony -q "$1" \
+        --bind "change:reload:$RG_PREFIX {q}" \
+        --preview-window="70%:wrap"
+  )" &&
+  echo "opening $file" &&
+  xdg-open "$file"
+}
+
+# Quick notes access
+notes() {
+  if ! pushd ~/notes >/dev/null 2>&1; then
+    echo "❌ Error: Could not enter ~/notes"
+    return 1
+  fi
+
+  # Ensure files exist
+  if ! touch next-actions.md 2>/dev/null; then
+    echo "❌ Error: Failed to create/open next-actions.md"
+    popd >/dev/null
+    return 1
+  fi
+
+  # Open in nvim
+  if ! nvim -O next-actions.md; then
+    echo "❌ Error: nvim failed to start"
+    popd >/dev/null
+    return 1
+  fi
+
+  if ! popd >/dev/null 2>&1; then
+    echo "⚠️ Warning: Could not return to previous directory"
+    return 1
+  fi
+}
+
+# Alternative to direnv for Nix flakes
+nixdev() {
+  # Search upward for flake.nix or flake.lock
+  local dir="$PWD"
+  local root=""
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/flake.nix" || -f "$dir/flake.lock" ]]; then
+      root="$dir"
+      break
+    fi
+    dir="$(dirname "$dir")"
+  done
+
+  if [[ -z "$root" ]]; then
+    echo "⚠️  No flake.nix or flake.lock found in this directory tree."
+    return 1
+  fi
+
+  echo "→ Loading nix dev env from $root"
+
+  # Store current environment to detect changes
+  local temp_file=$(mktemp)
+  env | sort > "$temp_file.before"
+
+  local dev_env_output
+
+  if ! dev_env_output=$(
+    cd "$root" &&
+      nix --extra-experimental-features "nix-command flakes" print-dev-env $@ \
+      | grep -v 'LINENO' \
+      | grep -v 'EPOCHSECONDS' \
+      | grep -v 'EPOCHREALTIME' \
+      | grep -v 'SHELL='
+  ); then
+    echo "❌ Failed to load nix development environment"
+    return 1
+  fi
+
+  eval "$dev_env_output"
+
+  # Show what changed
+  env | sort > "$temp_file.after"
+  local changes=$(comm -13 "$temp_file.before" "$temp_file.after" | wc -l)
+  rm -f "$temp_file.before" "$temp_file.after"
+
+  echo "✅ Nix dev environment loaded ($changes environment variables changed)"
+  echo "   Re-run \`nixdev\` after editing flake.nix/flake.lock"
+}
+
+# ============================================================================
+# END OF ZSH CONFIGURATION
+# ============================================================================
