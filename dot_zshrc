@@ -106,24 +106,19 @@ if [[ $options[zle] = on ]]; then
     source <(fzf --zsh)
 fi
 
-# sharkdp/fd
-zinit ice as"command" from"gh-r" mv"fd* -> fd" pick"fd/fd"
-zinit light sharkdp/fd
+# sxyazi/yazi - terminal file manager
+zinit ice as"command" from"gh-r" mv"yazi-* -> yazi"
+zinit light sxyazi/yazi
 
-# sharkdp/bat
-zinit ice as"command" from"gh-r" mv"bat* -> bat" pick"bat/bat"
-zinit light sharkdp/bat
-
-# ogham/exa, replacement for ls
-zinit ice wait"2" lucid from"gh-r" as"program" mv"exa* -> exa"
-zinit light ogham/exa
+# chmln/sd - sed replacement (easier syntax)
+zinit ice as"command" from"gh-r" mv"sd-* -> sd"
+zinit light chmln/sd
 
 # All of the above using the for-syntax and also z-a-bin-gem-node annex
 zinit wait"1" lucid from"gh-r" as"null" for \
      sbin"fzf"          junegunn/fzf \
-     sbin"**/fd"        @sharkdp/fd \
-     sbin"**/bat"       @sharkdp/bat \
-     sbin"**/exa"       ogham/exa
+     sbin"yazi"         sxyazi/yazi \
+     sbin"sd"           chmln/sd
 
 
 # ============================================================================

@@ -1,10 +1,27 @@
 packages:
   dnf:
+    # Core development tools
     - uv
     - bun
-    - ripgrep
-    - neovim
-    - fd-find
     - delta
+    - git-extras
+    - neovim
+
+    # Shell utilities
+    - ripgrep
+    - bat
+    - eza
+    - fd-find
+
+    # Development
+    - typst
+
+    # Networking
+    - bind-utils
+    - mtr
+
+    # Other
     - git-lfs
     - pinentry-qt
+
+    - btrfs-assistant
