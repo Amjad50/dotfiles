@@ -1,6 +1,6 @@
 repositories:
   fedora:
-    - https://download.opensuse.org/repositories/home:/mkittler/Fedora_$FEDORA_VER/home:mkittler.repo
+    #- https://download.opensuse.org/repositories/home:/mkittler/Fedora_$FEDORA_VER/home:mkittler.repo
 
 packages:
   dnf:
@@ -29,8 +29,8 @@ packages:
     # Other
     - git-lfs
     - pinentry-qt
-    - syncthing
-    - syncthingtray
+    # - syncthing
+    # - syncthingtray
     - btrfs-assistant
 
     # Fonts
@@ -40,4 +40,4 @@ packages:
 
   flatpak:
     - io.beekeeperstudio.Studio
-    - com.getmailspring.Mailspring
+    #- com.getmailspring.Mailspring
