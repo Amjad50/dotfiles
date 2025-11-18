@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# If we are running inside an SSH session *and* no GUI is available
+if [ -n "$SSH_CONNECTION" ] || [ -n "$SSH_TTY" ]; then
+    if [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ]; then
+        exec /usr/bin/pinentry-curses "$@"
+    fi
+fi
+
+# Default to Qt (local GUI)
+exec /usr/bin/pinentry-qt "$@"
+
