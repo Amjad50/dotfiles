@@ -1,5 +1,11 @@
 return {
   {
+    "LazyVim/LazyVim",
+    opts = {
+      colorscheme = "catppuccin",
+    },
+  },
+  {
     "snacks.nvim",
     opts = {
       bigfile = { enabled = true },
@@ -41,6 +47,6 @@ return {
   },
   {
     "nvim-treesitter/nvim-treesitter",
-    opts = { ensure_installed = { "rust", "ron", "zig", "go" } },
+    opts = { ensure_installed = { "rust", "ron", "zig", "go", "nix" } },
   },
 }

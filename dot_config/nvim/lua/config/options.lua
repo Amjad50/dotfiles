@@ -7,3 +7,6 @@ vim.g.lazyvim_rust_diagnostics = "rust-analyzer"
 
 vim.o.exrc = true
 vim.o.secure = true
+
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.opt.foldmethod = "expr"
