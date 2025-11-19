@@ -38,6 +38,9 @@ packages:
     - google-noto-sans-fonts
     - google-noto-mono-fonts
 
+    # Extra
+    - gh
+
   flatpak:
     - io.beekeeperstudio.Studio
     #- com.getmailspring.Mailspring
