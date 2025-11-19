@@ -133,13 +133,21 @@ zinit light romkatv/powerlevel10k
 [[ ! -f $HOME/.p10k.zsh ]] || source $HOME/.p10k.zsh
 
 # ============================================================================
-# 8. ENVIRONMENT VARIABLES & EXTERNAL TOOLS
+# 8. ENVIRONMENT VARIABLES & EXTERNAL TOOLS & PATHS
 # ============================================================================
 
 export GPG_TTY=$TTY
 
 # Direnv integration (for directory-specific environments)
 eval "$(direnv hook zsh)"
+
+if [[ -d $HOME/.bun/bin ]]; then
+  PATH="$HOME/.bun/bin:$PATH"
+fi
+
+if [[ -d $HOME/.cargo/bin ]]; then
+  PATH="$HOME/.cargo/bin:$PATH"
+fi
 
 # ============================================================================
 # 9. ALIASES
