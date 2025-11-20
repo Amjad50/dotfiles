@@ -13,6 +13,19 @@ return {
     },
   },
   {
+    "saghen/blink.cmp",
+    opts = {
+      keymap = {
+        preset = "super-tab",
+      },
+      completion = {
+        trigger = {
+          show_in_snippet = false,
+        },
+      },
+    },
+  },
+  {
     "lewis6991/gitsigns.nvim",
     opts = {
       current_line_blame = true, -- Toggle with `:Gitsigns toggle_current_line_blame`
@@ -47,6 +60,33 @@ return {
   },
   {
     "nvim-treesitter/nvim-treesitter",
-    opts = { ensure_installed = { "rust", "ron", "zig", "go", "nix" } },
+    opts = { ensure_installed = { "zig", "go", "nix" } },
+  },
+  {
+    "mrcjkb/rustaceanvim",
+    opts = {
+      server = {
+        default_settings = {
+          ["rust-analyzer"] = {
+            check = {
+              command = "check",
+              extraArgs = {},
+            },
+          },
+        },
+      },
+    },
+  },
+  {
+    "mason.nvim",
+    opts = { ensure_installed = { "slint-lsp" } },
+  },
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        slint_lsp = {},
+      },
+    },
   },
 }
