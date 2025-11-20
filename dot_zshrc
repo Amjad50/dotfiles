@@ -66,6 +66,7 @@ unsetopt HIST_EXPIRE_DUPS_FIRST
 setopt SHARE_HISTORY
 unsetopt EXTENDED_HISTORY
 setopt autocd
+setopt nocaseglob
 
 # ============================================================================
 # 4. COMPLETION SETUP
@@ -143,7 +144,8 @@ if [[ -d $HOME/.cargo/bin ]]; then
   PATH="$HOME/.cargo/bin:$PATH"
 fi
 
-EDITOR=/usr/bin/nvim
+export EDITOR=/usr/bin/nvim
+export LESS='-R -M --mouse'
 
 # ============================================================================
 # 9. ALIASES
