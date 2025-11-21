@@ -1,46 +1,82 @@
-repositories:
-  fedora:
-    #- https://download.opensuse.org/repositories/home:/mkittler/Fedora_$FEDORA_VER/home:mkittler.repo
-
-packages:
-  dnf:
-    # Core development tools
-    - uv
-    - bun
-    - delta
-    - git-extras
+# Common packages installed on all machines (must have identical names across distros)
+common:
+  packages:
     - neovim
+    - git-extras
     - direnv
-
-    # Shell utilities
     - ripgrep
     - bat
     - eza
-    - fd-find
-
-    # Development
-    - typst
-    - mold
-
-    # Networking
-    - bind-utils
-    - mtr
-
-    # Other
     - git-lfs
-    - pinentry-qt
-    # - syncthing
-    # - syncthingtray
-    - btrfs-assistant
+    - mtr
+    - lazygit
 
-    # Fonts
-    - google-noto-color-emoji-fonts
-    - google-noto-sans-fonts
-    - google-noto-mono-fonts
+# Machine-specific configuration
+machines:
+  amjad-T495:
+    packages:
+      pacman:
+        - uv
+        - bun
+        - git-delta
+        - fd
+        - github-cli
+        - bind-tools
+        - base-devel
 
-    # Extra
-    - gh
+        # System tools
+        - pinentry
+        - btrfs-assistant
 
-  flatpak:
-    - io.beekeeperstudio.Studio
-    #- com.getmailspring.Mailspring
+    repositories:
+      pacman:
+        - |
+          if ! grep -q "\[chaotic-aur\]" /etc/pacman.conf; then
+            echo "    → Installing Chaotic-AUR keyring..."
+            sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+            sudo pacman-key --lsign-key 3056513887B78AEB
+            echo "    → Installing Chaotic-AUR packages..."
+            sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
+            sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+            echo "    → Adding Chaotic-AUR to pacman.conf..."
+            echo -e "\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist" | sudo tee -a /etc/pacman.conf > /dev/null
+            echo "    → Syncing package databases..."
+            sudo pacman -Sy
+            echo "    → Chaotic-AUR setup complete"
+          else
+            echo "    → Chaotic-AUR already configured"
+          fi
+  amjad-red:
+    packages:
+      dnf:
+        # Development tools
+        - uv
+        - bun
+        - delta
+        - fd-find
+        - typst
+        - mold
+        - gh
+
+        # Networking
+        - bind-utils
+
+        # System tools
+        - pinentry-qt
+        - btrfs-assistant
+
+        # Fonts
+        - google-noto-color-emoji-fonts
+        - google-noto-sans-fonts
+        - google-noto-mono-fonts
+
+      # Flatpak packages (only runs if flatpak exists)
+      flatpak:
+        - io.beekeeperstudio.Studio
+        #- com.getmailspring.Mailspring
+
+    # Repositories
+    repositories:
+      dnf:
+        #- https://download.opensuse.org/repositories/home:/mkittler/Fedora_$FEDORA_VER/home:mkittler.repo
+
