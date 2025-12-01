@@ -116,6 +116,11 @@ zinit light sxyazi/yazi
 zinit ice as"program" from"gh-r" mv"sd* -> sd" pick"sd/sd"
 zinit light chmln/sd
 
+# nvm
+export NVM_COMPLETION=true
+export NVM_SYMLINK_CURRENT=true
+export NVM_LAZY_LOAD=true
+zinit wait lucid light-mode for lukechilds/zsh-nvm
 
 # ============================================================================
 # 7. THEME - POWERLEVEL10K
@@ -135,7 +140,9 @@ zinit light romkatv/powerlevel10k
 export GPG_TTY=$TTY
 
 # Direnv integration (for directory-specific environments)
-eval "$(direnv hook zsh)"
+if command -v direnv > /dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
 
 if [[ -d $HOME/.bun/bin ]]; then
   PATH="$HOME/.bun/bin:$PATH"
