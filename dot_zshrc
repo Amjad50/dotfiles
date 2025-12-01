@@ -40,12 +40,6 @@ bindkey -e
 # Delete key support
 bindkey "^[[3~" delete-char
 
-# History substring search keybindings
-bindkey "^[[A" history-substring-search-up
-bindkey "^[OA" history-substring-search-up
-bindkey "^[[B" history-substring-search-down
-bindkey "^[OB" history-substring-search-down
-
 # ============================================================================
 # 3. HISTORY CONFIGURATION
 # ============================================================================
@@ -88,6 +82,13 @@ zinit light zsh-users/zsh-history-substring-search
 # Auto-suggestions (optional, uncomment if desired)
 zinit light zsh-users/zsh-autosuggestions
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+# History substring search keybindings
+bindkey "^[[A" history-substring-search-up
+bindkey "^[OA" history-substring-search-up
+bindkey "^[[B" history-substring-search-down
+bindkey "^[OB" history-substring-search-down
+
 
 # ============================================================================
 # 6. PROGRAMS using ZINIT
