@@ -6,10 +6,8 @@ common:
     - direnv
     - ripgrep
     - bat
-    - eza
     - git-lfs
     - mtr
-    - lazygit
 
 # Machine-specific configuration
 machines:
@@ -23,6 +21,8 @@ machines:
         - github-cli
         - bind-tools
         - base-devel
+        - eza
+        - lazygit
 
         # System tools
         - pinentry
@@ -57,6 +57,8 @@ machines:
         - typst
         - mold
         - gh
+        - eza
+        - lazygit
 
         # Networking
         - bind-utils
