@@ -23,6 +23,7 @@ machines:
         - base-devel
         - eza
         - lazygit
+        - syncthing
 
         # System tools
         - pinentry
@@ -59,6 +60,7 @@ machines:
         - gh
         - eza
         - lazygit
+        - syncthing
 
         # Networking
         - bind-utils

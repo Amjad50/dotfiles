@@ -1,0 +1,71 @@
+{{ if or (eq .chezmoi.hostname "amjad-T495") (eq .chezmoi.hostname "amjad-fed") -}}
+#!/bin/bash
+
+echo "--- Writing config.xml ---"
+
+CONFIG_FILE="$HOME/.config/syncthing/config.xml"
+
+{{- $secrets_content := include ".secrets/syncthing_secrets.json.age" | decrypt }}
+{{- $secrets := $secrets_content | fromJson }}
+
+cat > "$CONFIG_FILE" << 'EOF'
+<configuration version="37">
+  <gui enabled="true" tls="false" debugging="false">
+    <address>127.0.0.1:8384</address>
+    <metricsWithoutAuth>false</metricsWithoutAuth>
+    <apikey>{{ $secrets.api_key }}</apikey>
+    <theme>default</theme>
+  </gui>
+
+  {{- range $secrets.folders }}
+  <folder id="{{ .id }}" label="{{ .label }}" path="{{ .path }}" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" ignorePerms="false" autoNormalize="true">
+    {{- range $secrets.devices }}
+    <device id="{{ .id }}" introducedBy="">
+      <encryptionPassword></encryptionPassword>
+    </device>
+    {{- end }}
+
+  </folder>
+  {{- end }}
+
+  {{- range $secrets.devices }}
+  <device id="{{ .id }}" name="{{ .name }}" compression="metadata" introducer="false" skipIntroductionRemovals="false" introducedBy="">
+    <address>{{ .address }}</address>
+  </device>
+  {{- end }}
+
+  <options>
+  </options>
+</configuration>
+EOF
+
+echo "--- Managing Syncthing User Service ---"
+
+# 1. Reload systemd daemon
+# This is crucial if Chezmoi just updated the syncthing.service file in ~/.config/systemd/user/
+systemctl --user daemon-reload
+echo "Systemd daemon reloaded."
+
+# 2. Enable the service (Idempotent: harmless to run if already enabled)
+# This ensures Syncthing starts automatically upon user login.
+systemctl --user enable syncthing.service
+echo "Syncthing service enabled for current user."
+
+# 3. Restart the service
+# This applies any changes made to config.xml or the syncthing.service file.
+if systemctl --user is-enabled syncthing.service &>/dev/null; then
+  echo "Restarting Syncthing to apply new configuration/secrets..."
+  systemctl --user restart syncthing.service
+
+  # Check status (optional, but good for feedback)
+  sleep 3
+  if systemctl --user is-active syncthing.service &>/dev/null; then
+    echo "Syncthing service active."
+  else
+    echo "Error: Syncthing service failed to start. Check logs (journalctl --user -u syncthing.service)."
+  fi
+else
+  echo "Syncthing service is not available (is the package installed?). Skipping restart."
+fi
+
+{{ end -}}
