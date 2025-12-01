@@ -46,7 +46,7 @@ machines:
           else
             echo "    → Chaotic-AUR already configured"
           fi
-  amjad-red:
+  amjad-fed:
     packages:
       dnf:
         # Development tools
