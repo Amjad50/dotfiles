@@ -4,6 +4,7 @@
 
 vim.g.mapleader = ","
 vim.g.lazyvim_rust_diagnostics = "rust-analyzer"
+vim.g.autoformat = false
 
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldmethod = "expr"
