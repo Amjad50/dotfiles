@@ -1,33 +1,76 @@
-# Common packages installed on all machines (must have identical names across distros)
-common:
-  packages:
-    - neovim
-    - git-extras
-    - direnv
-    - ripgrep
-    - bat
-    - git-lfs
-    - mtr
+# ============================================================================
+# Tag Definitions - Categorize machines by characteristics
+# ============================================================================
+tags:
+  default:
+    description: "Default packages auto-applied to all machines"
+  dev:
+    description: "Development tools (compilers, language managers, version control)"
+  personal:
+    description: "Laptop-specific packages (syncing, power management)"
 
-# Machine-specific configuration
+# ============================================================================
+# Packages organized by tags
+# Each tag can have 'common' (distro-agnostic) and distro-specific sections
+# The 'default' tag is auto-applied to all machines
+# ============================================================================
+tag_packages:
+  default:
+    common:
+      - neovim
+      - git-extras
+      - direnv
+      - ripgrep
+      - bat
+      - git-lfs
+      - mtr
+    arch:
+      - bind-tools
+    fedora:
+      - bind-utils
+
+  dev:
+    common:
+      - uv
+      - bun
+      - fd
+      - mold
+      - lazygit
+    arch:
+      - git-delta
+      - base-devel
+      - github-cli
+      - eza
+    fedora:
+      - delta
+      - fd-find
+      - gh
+      - eza
+
+  personal:
+    common:
+      - btrfs-assistant
+      - syncthing
+      - typst
+    arch:
+      - pinentry
+    fedora:
+      - pinentry-qt
+      - google-noto-color-emoji-fonts
+      - google-noto-sans-fonts
+      - google-noto-mono-fonts
+
+# ============================================================================
+# Machine configurations
+# Each machine specifies: distro + tags (which packages to install)
+# ============================================================================
 machines:
-  amjad-T495:
-    packages:
-      pacman:
-        - uv
-        - bun
-        - git-delta
-        - fd
-        - github-cli
-        - bind-tools
-        - base-devel
-        - eza
-        - lazygit
-        - syncthing
+  amjad-red:
+    distro: arch
+    tags: [dev]
 
-        # System tools
-        - pinentry
-        - btrfs-assistant
+    packages:
+      pacman: []
 
     repositories:
       pacman:
@@ -47,39 +90,43 @@ machines:
           else
             echo "    → Chaotic-AUR already configured"
           fi
-  amjad-fed:
+
+  amjad-T495:
+    distro: arch
+    tags: [dev, personal]
+
     packages:
-      dnf:
-        # Development tools
-        - uv
-        - bun
-        - delta
-        - fd-find
-        - typst
-        - mold
-        - gh
-        - eza
-        - lazygit
-        - syncthing
+      pacman: []
 
-        # Networking
-        - bind-utils
+    repositories:
+      pacman:
+        - |
+          if ! grep -q "\[chaotic-aur\]" /etc/pacman.conf; then
+            echo "    → Installing Chaotic-AUR keyring..."
+            sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+            sudo pacman-key --lsign-key 3056513887B78AEB
+            echo "    → Installing Chaotic-AUR packages..."
+            sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
+            sudo pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+            echo "    → Adding Chaotic-AUR to pacman.conf..."
+            echo -e "\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist" | sudo tee -a /etc/pacman.conf > /dev/null
+            echo "    → Syncing package databases..."
+            sudo pacman -Sy
+            echo "    → Chaotic-AUR setup complete"
+          else
+            echo "    → Chaotic-AUR already configured"
+          fi
 
-        # System tools
-        - pinentry-qt
-        - btrfs-assistant
+  amjad-fed:
+    distro: fedora
+    tags: [dev, personal]
 
-        # Fonts
-        - google-noto-color-emoji-fonts
-        - google-noto-sans-fonts
-        - google-noto-mono-fonts
-
-      # Flatpak packages (only runs if flatpak exists)
+    packages:
+      dnf: []
       flatpak:
         - io.beekeeperstudio.Studio
         #- com.getmailspring.Mailspring
 
-    # Repositories
     repositories:
       dnf:
         #- https://download.opensuse.org/repositories/home:/mkittler/Fedora_$FEDORA_VER/home:mkittler.repo

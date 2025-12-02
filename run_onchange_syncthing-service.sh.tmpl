@@ -1,4 +1,5 @@
-{{ if or (eq .chezmoi.hostname "amjad-T495") (eq .chezmoi.hostname "amjad-fed") -}}
+{{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
+{{ if has "personal" $tags -}}
 #!/bin/bash
 
 echo "--- Writing config.xml ---"

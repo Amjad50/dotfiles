@@ -1,27 +1,57 @@
 {{ if eq .chezmoi.os "linux" -}}
 #!/bin/bash
 # ============================================================================
-# Multi-distro package installer for chezmoi
+# Multi-distro package installer for chezmoi (Tags-based)
 # Automatically detects available package managers and installs packages
+# based on machine tags (dev, laptop, gui, headless, etc.)
 # ============================================================================
 
 set -e
 
 {{ $hostname := .chezmoi.hostname -}}
 {{ $machine := dig "machines" $hostname dict . -}}
+{{ $distro := dig "distro" "" $machine -}}
+{{ $tagsConfigured := dig "tags" list $machine -}}
 {{ $pkgs := dig "packages" dict $machine -}}
 {{ $repos := dig "repositories" dict $machine -}}
-{{ $commonPkgs := .common.packages -}}
+{{ $tagPackages := .tag_packages -}}
+
+{{- /* Auto-apply 'default' tag + configured tags */ -}}
+{{ $tags := concat (list "default") $tagsConfigured | uniq -}}
 
 HOSTNAME="{{ .chezmoi.hostname }}"
 
 {{ if $machine -}}
 echo "→ Installing packages for: $HOSTNAME"
+echo "  • Distro: $distro"
+echo "  • Tags: {{ join ", " $tags }}"
 {{ else -}}
 echo "⚠️  No machine-specific configuration found for: $HOSTNAME"
-echo "→ Installing common packages only..."
+echo "→ Installing default packages only..."
 {{ end -}}
 echo ""
+
+{{- /* Collect packages from tags for each distro */ -}}
+{{ $dnfFromTags := list -}}
+{{ $pacmanFromTags := list -}}
+{{ $aptFromTags := list -}}
+
+{{- range $tag := $tags }}
+  {{- $tagData := dig $tag dict $tagPackages }}
+  {{- $dnfFromTags = concat $dnfFromTags (dig "common" list $tagData) (dig "fedora" list $tagData) }}
+  {{- $pacmanFromTags = concat $pacmanFromTags (dig "common" list $tagData) (dig "arch" list $tagData) }}
+  {{- $aptFromTags = concat $aptFromTags (dig "common" list $tagData) (dig "debian" list $tagData) }}
+{{- end }}
+
+{{- /* Combine tag packages + machine-specific packages */ -}}
+{{ $dnfSpecific := dig "dnf" list $pkgs -}}
+{{ $dnfToInstall := concat $dnfFromTags $dnfSpecific | uniq -}}
+
+{{ $pacmanSpecific := dig "pacman" list $pkgs -}}
+{{ $pacmanToInstall := concat $pacmanFromTags $pacmanSpecific | uniq -}}
+
+{{ $aptSpecific := dig "apt" list $pkgs -}}
+{{ $aptToInstall := concat $aptFromTags $aptSpecific | uniq -}}
 
 # ============================================================================
 # DNF (Fedora, RHEL, CentOS, etc.)
@@ -37,9 +67,6 @@ if command -v dnf &>/dev/null; then
   sudo dnf config-manager addrepo --from-repofile={{ . }}
   {{ end -}}
   {{ end -}}
-
-  {{ $dnfSpecific := dig "dnf" list $pkgs -}}
-  {{ $dnfToInstall := concat $commonPkgs $dnfSpecific | uniq -}}
 
   {{ if $dnfToInstall -}}
   echo "  → Installing {{ len $dnfToInstall }} DNF packages..."
@@ -64,9 +91,6 @@ if command -v pacman &>/dev/null; then
   {{ end -}}
   {{ end -}}
 
-  {{ $pacmanSpecific := dig "pacman" list $pkgs -}}
-  {{ $pacmanToInstall := concat $commonPkgs $pacmanSpecific | uniq -}}
-
   {{ if $pacmanToInstall -}}
   echo "  → Installing {{ len $pacmanToInstall }} Pacman packages..."
   sudo pacman -S --needed --noconfirm {{ join " " $pacmanToInstall }}
@@ -90,9 +114,6 @@ if command -v apt &>/dev/null; then
   {{ end -}}
   sudo apt update
   {{ end -}}
-
-  {{ $aptSpecific := dig "apt" list $pkgs -}}
-  {{ $aptToInstall := concat $commonPkgs $aptSpecific | uniq -}}
 
   {{ if $aptToInstall -}}
   echo "  → Installing {{ len $aptToInstall }} APT packages..."
