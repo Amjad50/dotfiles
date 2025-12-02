@@ -1,5 +1,18 @@
 # ============================================================================
-# Tag Definitions - Categorize machines by characteristics
+# Tag Definitions & Usage Guide
+# ============================================================================
+# Tags categorize machines by characteristics. The 'default' tag is ALWAYS
+# auto-applied. Add others to machines in the machines: section below.
+#
+# TO ADD A NEW TAG:
+#   1. Add entry below (with description)
+#   2. Add its packages under tag_packages: below
+#   3. Add the tag to machines that need it
+#
+# TO ADD A NEW MACHINE:
+#   1. Add entry under machines: with distro + tags
+#   2. Include optional distro-specific package overrides (packages:)
+#   3. Include optional setup scripts (repositories:)
 # ============================================================================
 tags:
   default:
@@ -61,8 +74,26 @@ tag_packages:
       - google-noto-mono-fonts
 
 # ============================================================================
-# Machine configurations
-# Each machine specifies: distro + tags (which packages to install)
+# Machine Configurations
+# ============================================================================
+# DISTRO OPTIONS: arch, fedora, debian
+# TAGS: default (auto), dev, personal, or define new ones above
+#
+# Example minimal machine (headless/SSH server):
+#   my-server:
+#     distro: debian
+#     tags: []  # Gets only 'default' packages
+#     packages:
+#       apt: []
+#
+# Example full setup (dev laptop):
+#   my-laptop:
+#     distro: arch
+#     tags: [dev, personal]
+#     packages:
+#       pacman: []  # Optional: add distro-specific packages
+#     repositories:
+#       pacman: []  # Optional: setup scripts
 # ============================================================================
 machines:
   amjad-red:
