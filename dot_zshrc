@@ -157,7 +157,7 @@ if [[ -d $HOME/.local/bin ]]; then
 fi
 
 export EDITOR=/usr/bin/nvim
-export LESS='-R -M --mouse'
+export LESS='-R'
 
 # ============================================================================
 # 9. ALIASES
