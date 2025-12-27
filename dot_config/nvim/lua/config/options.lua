@@ -8,3 +8,6 @@ vim.g.autoformat = false
 
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldmethod = "expr"
+
+-- don't use unnamedplus
+vim.opt.clipboard = ""
