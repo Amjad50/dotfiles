@@ -8,6 +8,7 @@
 	ds = "diff --staged"
 	logg = "log --oneline --full-history --all --decorate --graph"
 	st = "status"
+  pushf = "push --force-with-lease"
 
 [color]
 	ui = "auto"
