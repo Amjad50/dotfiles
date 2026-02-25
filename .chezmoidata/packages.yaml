@@ -98,7 +98,7 @@ tag_packages:
 machines:
   amjad-red:
     distro: arch
-    tags: [dev]
+    tags: [dev, personal]
 
     packages:
       pacman: []
