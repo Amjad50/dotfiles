@@ -1,5 +1,70 @@
 return {
   {
+    "ThePrimeagen/99",
+    event = "VeryLazy", -- or "BufReadPost" if you want it earlier
+    opts = {
+      config = function()
+        local _99 = require("99")
+
+        local cwd = vim.uv.cwd()
+        local basename = vim.fs.basename(cwd)
+
+        _99.setup({
+          logger = {
+            level = _99.DEBUG,
+            path = "/tmp/" .. basename .. ".99.debug",
+            print_on_error = true,
+          },
+
+          completion = {
+            custom_rules = {
+              "scratch/custom_rules/",
+            },
+            source = "cmp",
+          },
+
+          md_files = {
+            "AGENT.md",
+          },
+        })
+      end,
+    },
+    keys = {
+      {
+        "<leader>9f",
+        function()
+          require("99").fill_in_function()
+        end,
+        mode = "n",
+        desc = "99: Fill in function",
+      },
+      {
+        "<leader>9v",
+        function()
+          require("99").visual()
+        end,
+        mode = "v",
+        desc = "99: Visual request",
+      },
+      {
+        "<leader>9s",
+        function()
+          require("99").stop_all_requests()
+        end,
+        mode = "v",
+        desc = "99: Stop all requests",
+      },
+      {
+        "<leader>9fd",
+        function()
+          require("99").fill_in_function()
+        end,
+        mode = "n",
+        desc = "99: Fill in function (debug)",
+      },
+    },
+  },
+  {
     "LazyVim/LazyVim",
     opts = {
       colorscheme = "catppuccin",
