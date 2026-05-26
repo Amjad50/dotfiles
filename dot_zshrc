@@ -160,6 +160,10 @@ if [[ -d $HOME/.opencode/bin ]]; then
   PATH="$HOME/.opencode/bin:$PATH"
 fi
 
+if [[ -d "$HOME/.turso" ]]; then
+  PATH="$HOME/.turso:$PATH"
+fi
+
 export EDITOR=/usr/bin/nvim
 export LESS='-R'
 
