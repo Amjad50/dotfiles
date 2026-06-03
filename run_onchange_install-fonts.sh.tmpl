@@ -1,6 +1,6 @@
 {{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
 {{ if has "personal" $tags -}}
-#!/bin/bash
+#!/usr/bin/env bash
 # ============================================================================
 # Install Nerd Fonts (MesloLGS)
 # This script runs automatically when it changes

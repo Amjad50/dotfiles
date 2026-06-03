@@ -1,6 +1,6 @@
 {{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
 {{ if has "personal" $tags -}}
-#!/bin/bash
+#!/usr/bin/env bash
 # ============================================================================
 # Setup notes directory structure
 # This script runs automatically when it changes
