@@ -59,6 +59,15 @@ echo ""
 if command -v dnf &>/dev/null; then
   echo "→ DNF package manager detected"
 
+  # Enable the Terra repository (terrapkg.com) by default on all dnf machines.
+  # Provides packages like bun and lazygit. Idempotent: skips if already present.
+  if ! dnf repo list --enabled 2>/dev/null | grep -q "^terra"; then
+    echo "  → Enabling Terra repository..."
+    sudo dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+  else
+    echo "  → Terra repository already enabled"
+  fi
+
   {{ $dnfRepos := dig "dnf" list $repos -}}
   {{ if $dnfRepos -}}
   echo "  → Adding DNF repositories..."
