@@ -166,3 +166,15 @@ machines:
     distro: fedora
     tags: [dev]
 
+  # ---------------------------------------------------------------------------
+  # NixOS homelab servers. Packages and the full system are managed by the
+  # homelab Nix flake (environment.systemPackages)
+  # ---------------------------------------------------------------------------
+  home:
+    distro: nixos
+    tags: []
+
+  middle:
+    distro: nixos
+    tags: []
+
