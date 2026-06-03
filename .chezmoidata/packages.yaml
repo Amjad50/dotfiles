@@ -162,3 +162,7 @@ machines:
       dnf:
         #- https://download.opensuse.org/repositories/home:/mkittler/Fedora_$FEDORA_VER/home:mkittler.repo
 
+  AMJ:
+    distro: fedora
+    tags: [dev]
+
