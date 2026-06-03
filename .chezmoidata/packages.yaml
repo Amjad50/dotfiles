@@ -156,7 +156,7 @@ machines:
       dnf: []
       flatpak:
         - io.beekeeperstudio.Studio
-        #- com.getmailspring.Mailspring
+        - com.getmailspring.Mailspring
 
     repositories:
       dnf:
