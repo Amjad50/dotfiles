@@ -1,2 +1,11 @@
 .config/age/chezmoi-key.txt
 .config/syncthing
+
+{{- /* KDE/Plasma configs only make sense on `personal` (KDE laptop) machines. */}}
+{{- $tags := concat (list "default") (dig "tags" list (dig "machines" .chezmoi.hostname dict .)) | uniq }}
+{{- if not (has "personal" $tags) }}
+.config/kglobalshortcutsrc
+.config/kxkbrc
+.config/dolphinrc
+.config/konsolerc
+{{- end }}

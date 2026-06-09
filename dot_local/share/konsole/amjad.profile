@@ -3,6 +3,7 @@ ColorScheme=ArcDark
 Font=MesloLGS Nerd Font,14,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 
 [General]
+Command=/bin/zsh
 Name=amjad
 Parent=FALLBACK/
 TerminalColumns=90
