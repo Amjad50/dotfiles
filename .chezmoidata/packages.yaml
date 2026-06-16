@@ -190,7 +190,7 @@ machines:
           gpgkey=https://pkgs.netbird.io/yum/repodata/repomd.xml.key
           repo_gpgcheck=1
 
-  AMJ:
+  amjad-new-red:
     distro: fedora
     tags: [dev]
 
