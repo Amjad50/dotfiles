@@ -48,14 +48,13 @@ tag_packages:
       - bun
       - fd
       - mold
+      - git-delta
       - lazygit
     arch:
-      - git-delta
       - base-devel
       - github-cli
       - eza
     fedora:
-      - delta
       - fd-find
       - gh
       - eza
@@ -65,10 +64,9 @@ tag_packages:
       - btrfs-assistant
       - syncthing
       - typst
-    arch:
       - pinentry
+    arch: {}
     fedora:
-      - pinentry-qt
       - google-noto-color-emoji-fonts
       - google-noto-sans-fonts
       - google-noto-mono-fonts
@@ -153,18 +151,88 @@ machines:
     tags: [dev, personal]
 
     packages:
-      dnf: []
+      dnf:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+        - infisical
+        - netbird
       flatpak:
         - io.beekeeperstudio.Studio
         - com.getmailspring.Mailspring
+        - org.telegram.desktop
 
     repositories:
       dnf:
-        #- https://download.opensuse.org/repositories/home:/mkittler/Fedora_$FEDORA_VER/home:mkittler.repo
+        docker-ce: |
+          [docker-ce-stable]
+          name=Docker CE Stable - $basearch
+          baseurl=https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://download.docker.com/linux/fedora/gpg
+        infisical-cli: |
+          [infisical-cli]
+          name=Infisical CLI
+          baseurl=https://artifacts-cli.infisical.com/rpm
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://artifacts-cli.infisical.com/infisical.gpg
+          repo_gpgcheck=1
+        netbird: |
+          [NetBird]
+          name=NetBird
+          baseurl=https://pkgs.netbird.io/yum/
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://pkgs.netbird.io/yum/repodata/repomd.xml.key
+          repo_gpgcheck=1
 
   AMJ:
     distro: fedora
     tags: [dev]
+
+    packages:
+      dnf:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+        - infisical
+        - netbird
+      flatpak:
+        - com.getmailspring.Mailspring
+        - org.telegram.desktop
+
+    repositories:
+      dnf:
+        docker-ce: |
+          [docker-ce-stable]
+          name=Docker CE Stable - $basearch
+          baseurl=https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://download.docker.com/linux/fedora/gpg
+        infisical-cli: |
+          [infisical-cli]
+          name=Infisical CLI
+          baseurl=https://artifacts-cli.infisical.com/rpm
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://artifacts-cli.infisical.com/infisical.gpg
+          repo_gpgcheck=1
+        netbird: |
+          [NetBird]
+          name=NetBird
+          baseurl=https://pkgs.netbird.io/yum/
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://pkgs.netbird.io/yum/repodata/repomd.xml.key
+          repo_gpgcheck=1
+
 
   # ---------------------------------------------------------------------------
   # NixOS homelab servers. Packages and the full system are managed by the

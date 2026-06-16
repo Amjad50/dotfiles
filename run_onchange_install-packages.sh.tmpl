@@ -68,17 +68,37 @@ if command -v dnf &>/dev/null; then
     echo "  → Terra repository already enabled"
   fi
 
-  {{ $dnfRepos := dig "dnf" list $repos -}}
-  {{ if $dnfRepos -}}
-  echo "  → Adding DNF repositories..."
-  FEDORA_VER=$(rpm -E %fedora)
-  {{ range $dnfRepos -}}
+
+  {{- /* Third-party repositories. Supports two shapes for back-compat:
+         - dict  (name: full .repo file contents)  → written to /etc/yum.repos.d/<name>.repo
+         - list  (.repo file URLs)                 → added via dnf config-manager */}}
+  {{- $dnfRepos := dig "dnf" dict $repos }}
+  {{- if kindIs "map" $dnfRepos }}
+  {{- if $dnfRepos }}
+  echo "  → Configuring {{ len $dnfRepos }} third-party DNF repositories..."
+  {{ range $name, $content := $dnfRepos -}}
+  if [ ! -f "/etc/yum.repos.d/{{ $name }}.repo" ]; then
+    echo "    → Adding repo: {{ $name }}"
+    sudo tee "/etc/yum.repos.d/{{ $name }}.repo" > /dev/null << '__REPO_EOF__'
+{{ $content }}__REPO_EOF__
+  else
+    echo "    → Repo already present: {{ $name }}"
+  fi
+  {{ end -}}
+  {{ end -}}
+  {{ else -}}
+  {{ $dnfRepoList := dig "dnf" list $repos -}}
+  {{ if $dnfRepoList -}}
+  echo "  → Adding DNF repositories (from URLs)..."
+  {{ range $dnfRepoList -}}
   sudo dnf config-manager addrepo --from-repofile={{ . }}
+  {{ end -}}
   {{ end -}}
   {{ end -}}
 
   {{ if $dnfToInstall -}}
   echo "  → Installing {{ len $dnfToInstall }} DNF packages..."
+  # -y also auto-confirms importing repo GPG keys (some repos use repo_gpgcheck).
   sudo dnf install -y {{ join " " $dnfToInstall }}
   {{ else -}}
   echo "  → No DNF packages to install"
