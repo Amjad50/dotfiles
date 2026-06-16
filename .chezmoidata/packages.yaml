@@ -65,7 +65,7 @@ tag_packages:
       - syncthing
       - typst
       - pinentry
-    arch: {}
+    arch: []
     fedora:
       - google-noto-color-emoji-fonts
       - google-noto-sans-fonts

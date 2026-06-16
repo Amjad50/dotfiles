@@ -36,11 +36,17 @@ echo ""
 {{ $pacmanFromTags := list -}}
 {{ $aptFromTags := list -}}
 
+{{- /* Coerce a dig result to a list: YAML `{}` parses as an empty map, which
+       breaks concat. Treat any non-list value as an empty list. */ -}}
 {{- range $tag := $tags }}
   {{- $tagData := dig $tag dict $tagPackages }}
-  {{- $dnfFromTags = concat $dnfFromTags (dig "common" list $tagData) (dig "fedora" list $tagData) }}
-  {{- $pacmanFromTags = concat $pacmanFromTags (dig "common" list $tagData) (dig "arch" list $tagData) }}
-  {{- $aptFromTags = concat $aptFromTags (dig "common" list $tagData) (dig "debian" list $tagData) }}
+  {{- $common := dig "common" list $tagData }}{{ if not (kindIs "slice" $common) }}{{ $common = list }}{{ end }}
+  {{- $fedora := dig "fedora" list $tagData }}{{ if not (kindIs "slice" $fedora) }}{{ $fedora = list }}{{ end }}
+  {{- $arch := dig "arch" list $tagData }}{{ if not (kindIs "slice" $arch) }}{{ $arch = list }}{{ end }}
+  {{- $debian := dig "debian" list $tagData }}{{ if not (kindIs "slice" $debian) }}{{ $debian = list }}{{ end }}
+  {{- $dnfFromTags = concat $dnfFromTags $common $fedora }}
+  {{- $pacmanFromTags = concat $pacmanFromTags $common $arch }}
+  {{- $aptFromTags = concat $aptFromTags $common $debian }}
 {{- end }}
 
 {{- /* Combine tag packages + machine-specific packages */ -}}
