@@ -23,8 +23,15 @@ return {
       },
       lazygit     = {
         configure = true,
-        win = { border = "rounded" },
+        win = { width = 0, height = 0, border = false, backdrop = false },
         config = {
+          gui = {
+            screenMode = "normal",
+            sidePanelWidth = 0.25,
+            theme = {
+              unstagedChangesColor = { "red" },
+            },
+          },
           git = {
             paging = {
               colorArg     = "always",

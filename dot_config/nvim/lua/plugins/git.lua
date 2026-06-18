@@ -111,4 +111,44 @@ return {
       })
     end,
   },
+
+  {
+    "tanvirtin/vgit.nvim",
+    dependencies = { "nvim-lua/plenary.nvim", "nvim-tree/nvim-web-devicons" },
+    cmd = "VGit",
+    keys = {
+      { "<leader>vd", function() require("vgit").project_diff_preview() end,    desc = "VGit: project diff (staged/unstaged)" },
+      { "<leader>vs", function() require("vgit").buffer_hunk_stage() end,       desc = "VGit: stage hunk" },
+      { "<leader>vr", function() require("vgit").buffer_hunk_reset() end,       desc = "VGit: reset hunk" },
+      { "<leader>vb", function() require("vgit").buffer_blame_preview() end,    desc = "VGit: blame line" },
+      { "<leader>vh", function() require("vgit").buffer_history_preview() end,  desc = "VGit: file history" },
+      { "<leader>vl", function() require("vgit").project_logs_preview() end,    desc = "VGit: project logs" },
+    },
+    config = function()
+      require("vgit").setup()
+
+      -- vgit has no native mouse support. Its list views (project diff file
+      -- list, blame, logs) bind <enter> buffer-locally to act on the row under
+      -- the cursor. A double-click already moves the cursor to the clicked row,
+      -- so we just replay <enter> on click — but only in buffers that actually
+      -- have an <enter> mapping, keeping this harmless everywhere else.
+      local group = vim.api.nvim_create_augroup("user_vgit_mouse", { clear = true })
+      vim.api.nvim_create_autocmd("BufEnter", {
+        group = group,
+        callback = function(args)
+          local buf = args.buf
+          local has_enter = false
+          for _, m in ipairs(vim.api.nvim_buf_get_keymap(buf, "n")) do
+            if m.lhs == "<Enter>" or m.lhs == "<CR>" then
+              has_enter = true
+              break
+            end
+          end
+          if not has_enter then return end
+          -- double-click opens the file/row under the cursor
+          vim.keymap.set("n", "<2-LeftMouse>", "<CR>", { buffer = buf, remap = true, silent = true })
+        end,
+      })
+    end,
+  },
 }

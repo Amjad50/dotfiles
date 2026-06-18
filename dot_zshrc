@@ -361,3 +361,5 @@ nixdev() {
 
 # bun completions
 [ -s "/home/amjad/.bun/_bun" ] && source "/home/amjad/.bun/_bun"
+
+export _ZO_DOCTOR=0
