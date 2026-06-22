@@ -76,11 +76,17 @@ if command -v dnf &>/dev/null; then
   if [ -r /etc/os-release ] && grep -Eqw 'rhel|centos|almalinux|rocky' /etc/os-release; then
     terra_repo_prefix="terrael"
   fi
-  if ! dnf repo list --enabled 2>/dev/null | grep -q "^terra"; then
+  # Use `dnf repolist` (one word). The two-word `dnf repo list` is invalid on
+  # DNF5 / AlmaLinux 10 ("No such command: repo"), which made this guard print
+  # nothing and always re-add Terra — and re-adding a repo id that already
+  # exists on disk fails with "Repository terra is listed more than once".
+  # Match case-insensitively and across enabled+disabled repos so an existing
+  # Terra (however it was installed) is detected and the add is skipped.
+  if ! dnf repolist --all 2>/dev/null | grep -qi "^terra"; then
     echo "  → Enabling Terra repository (${terra_repo_prefix}\$releasever)..."
     sudo dnf install -y --nogpgcheck --repofrompath "terra,https://repos.fyralabs.com/${terra_repo_prefix}\$releasever" terra-release
   else
-    echo "  → Terra repository already enabled"
+    echo "  → Terra repository already present"
   fi
 
   {{- /* Third-party repositories. Supports two shapes for back-compat:

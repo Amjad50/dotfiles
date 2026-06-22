@@ -97,6 +97,12 @@ tag_packages:
 #       pacman: []  # Optional: setup scripts
 # ============================================================================
 machines:
+  # AlmaLinux 10 test server (Enterprise Linux, dnf). Reuses the 'fedora'
+  # package lists; the installer auto-detects EL and uses the terrael Terra path.
+  company-server-test:
+    distro: alma
+    tags: [dev]
+
   amjad-red:
     distro: arch
     tags: [dev, personal]
