@@ -31,30 +31,45 @@ tag_packages:
   default:
     common:
       - neovim
-      - git-extras
-      - direnv
       - ripgrep
       - bat
       - git-lfs
       - mtr
     arch:
       - bind-tools
+      - git-extras
+      - direnv
     fedora:
+      - bind-utils
+      - git-extras
+      - direnv
+    # AlmaLinux 10 / EL: git-extras and direnv are not packaged in the enabled
+    # repos (base/appstream/crb/epel/terra), so they are intentionally omitted.
+    alma:
       - bind-utils
 
   dev:
     common:
       - uv
-      - bun
-      - fd
       - mold
-      - git-delta
-      - lazygit
     arch:
       - base-devel
       - github-cli
       - eza
+      - bun
+      - fd
+      - git-delta
+      - lazygit
     fedora:
+      - fd-find
+      - gh
+      - eza
+      - bun
+      - git-delta
+      - lazygit
+    # AlmaLinux 10 / EL: bun, git-delta and lazygit are not in the enabled repos;
+    # fd is named fd-find. Only the EL10-available subset is listed here.
+    alma:
       - fd-find
       - gh
       - eza
@@ -67,6 +82,10 @@ tag_packages:
       - pinentry
     arch: []
     fedora:
+      - google-noto-color-emoji-fonts
+      - google-noto-sans-fonts
+      - google-noto-mono-fonts
+    alma:
       - google-noto-color-emoji-fonts
       - google-noto-sans-fonts
       - google-noto-mono-fonts

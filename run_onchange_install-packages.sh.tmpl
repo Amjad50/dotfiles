@@ -36,15 +36,21 @@ echo ""
 {{ $pacmanFromTags := list -}}
 {{ $aptFromTags := list -}}
 
+{{- /* The dnf distro-specific list key. AlmaLinux (and other Enterprise Linux)
+       package names differ from Fedora (e.g. fd-find vs fd) and several Fedora
+       packages aren't packaged for EL, so `alma` machines read a dedicated
+       `alma:` sub-list instead of `fedora:`. Other dnf machines use `fedora`. */ -}}
+{{- $dnfKey := eq $distro "alma" | ternary "alma" "fedora" -}}
+
 {{- /* Coerce a dig result to a list: YAML `{}` parses as an empty map, which
        breaks concat. Treat any non-list value as an empty list. */ -}}
 {{- range $tag := $tags }}
   {{- $tagData := dig $tag dict $tagPackages }}
   {{- $common := dig "common" list $tagData }}{{ if not (kindIs "slice" $common) }}{{ $common = list }}{{ end }}
-  {{- $fedora := dig "fedora" list $tagData }}{{ if not (kindIs "slice" $fedora) }}{{ $fedora = list }}{{ end }}
+  {{- $dnf := dig $dnfKey list $tagData }}{{ if not (kindIs "slice" $dnf) }}{{ $dnf = list }}{{ end }}
   {{- $arch := dig "arch" list $tagData }}{{ if not (kindIs "slice" $arch) }}{{ $arch = list }}{{ end }}
   {{- $debian := dig "debian" list $tagData }}{{ if not (kindIs "slice" $debian) }}{{ $debian = list }}{{ end }}
-  {{- $dnfFromTags = concat $dnfFromTags $common $fedora }}
+  {{- $dnfFromTags = concat $dnfFromTags $common $dnf }}
   {{- $pacmanFromTags = concat $pacmanFromTags $common $arch }}
   {{- $aptFromTags = concat $aptFromTags $common $debian }}
 {{- end }}
