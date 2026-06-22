@@ -67,9 +67,18 @@ if command -v dnf &>/dev/null; then
 
   # Enable the Terra repository (terrapkg.com) by default on all dnf machines.
   # Provides packages like bun and lazygit. Idempotent: skips if already present.
+  #
+  # Terra publishes Fedora packages under terra<ver> and Enterprise Linux
+  # (AlmaLinux/Rocky/RHEL) packages under terrael<ver>. Detect the distro
+  # family at runtime so $releasever (e.g. 10) maps to the right path:
+  # Fedora 41 → terra41, AlmaLinux 10 → terrael10 (NOT terra10, which 404s).
+  terra_repo_prefix="terra"
+  if [ -r /etc/os-release ] && grep -Eqw 'rhel|centos|almalinux|rocky' /etc/os-release; then
+    terra_repo_prefix="terrael"
+  fi
   if ! dnf repo list --enabled 2>/dev/null | grep -q "^terra"; then
-    echo "  → Enabling Terra repository..."
-    sudo dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+    echo "  → Enabling Terra repository (${terra_repo_prefix}\$releasever)..."
+    sudo dnf install -y --nogpgcheck --repofrompath "terra,https://repos.fyralabs.com/${terra_repo_prefix}\$releasever" terra-release
   else
     echo "  → Terra repository already enabled"
   fi

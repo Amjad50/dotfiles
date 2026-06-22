@@ -74,7 +74,10 @@ tag_packages:
 # ============================================================================
 # Machine Configurations
 # ============================================================================
-# DISTRO OPTIONS: arch, fedora, debian
+# DISTRO OPTIONS: arch, fedora, alma, debian
+#   - alma: AlmaLinux (and other Enterprise Linux: Rocky/RHEL/CentOS). Uses dnf
+#           and reuses the 'fedora' package lists. The installer auto-detects EL
+#           and points the Terra repo at terrael<ver> instead of terra<ver>.
 # TAGS: default (auto), dev, personal, or define new ones above
 #
 # Example minimal machine (headless/SSH server):
