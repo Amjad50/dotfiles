@@ -29,6 +29,35 @@ PROFILE_DIR = Path.home() / ".thunderbird" / "main"
 TB_DIR = Path.home() / ".thunderbird"
 DAT_FILES = ("mailViews.dat", "virtualFolders.dat")
 
+# Folder-pane modes (e.g. "all,smart" — "smart" is Unified Folders) live as the
+# folderTree element's `mode` attribute in xulstore.json, NOT in prefs.js. We
+# sync only that one value so the rest of xulstore (window geometry etc.) stays
+# machine-local. Stored plaintext in the repo as `foldertree-mode` (not secret).
+XULSTORE = PROFILE_DIR / "xulstore.json"
+XUL_WINDOW = "chrome://messenger/content/messenger.xhtml"
+FOLDERTREE_MODE_FILE = "foldertree-mode"
+
+
+def read_foldertree_mode() -> str | None:
+    if not XULSTORE.is_file():
+        return None
+    try:
+        return json.loads(XULSTORE.read_text())[XUL_WINDOW]["folderTree"]["mode"]
+    except (json.JSONDecodeError, OSError, KeyError):
+        return None
+
+
+def write_foldertree_mode(mode: str) -> None:
+    # Merge into the live xulstore.json, preserving every other key.
+    store = {}
+    if XULSTORE.is_file():
+        try:
+            store = json.loads(XULSTORE.read_text())
+        except (json.JSONDecodeError, OSError):
+            store = {}
+    store.setdefault(XUL_WINDOW, {}).setdefault("folderTree", {})["mode"] = mode
+    XULSTORE.write_text(json.dumps(store))
+
 # Add-ons installed into the profile live here (vs app-global/app-builtin, which
 # are the langpacks + built-in themes that ship with Thunderbird — not ours).
 PROFILE_ADDON_LOCATIONS = {"app-profile", "app-system-profile"}
@@ -241,6 +270,11 @@ def cmd_save() -> None:
             )
             print(f"    • copied {name} ({n} entries, {state})")
 
+    mode = read_foldertree_mode()
+    if mode:
+        (src / FOLDERTREE_MODE_FILE).write_text(mode + "\n")
+        print(f"    • folder-pane mode ({mode})")
+
     addons = read_addons(PROFILE_DIR)
     if addons:
         (src / "extensions.md").write_text(render_extensions_md(addons))
@@ -277,6 +311,10 @@ def cmd_load() -> None:
     keymap = src / "tbkeys-keymap.json"
     if keymap.is_file():
         shutil.copyfile(keymap, TB_DIR / "tbkeys-keymap.json")
+    mode_file = src / FOLDERTREE_MODE_FILE
+    if mode_file.is_file():
+        write_foldertree_mode(mode_file.read_text().strip())
+        print(f"    • folder-pane mode ({mode_file.read_text().strip()})")
     print("✅ Loaded into the live profile. (Accounts apply on next Thunderbird start.)")
     print_addon_urls(src / "extensions.md")
 

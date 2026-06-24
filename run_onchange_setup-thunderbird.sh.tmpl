@@ -8,6 +8,7 @@
 #   exts:     {{ include "private_dot_thunderbird/dot_chezmoi-tb/extensions.md" | sha256sum }}
 #   vfolders: {{ include "private_dot_thunderbird/dot_chezmoi-tb/encrypted_virtualFolders.dat.age" | sha256sum }}
 #   views:    {{ include "private_dot_thunderbird/dot_chezmoi-tb/encrypted_mailViews.dat.age" | sha256sum }}
+#   ftmode:   {{ include "private_dot_thunderbird/dot_chezmoi-tb/foldertree-mode" | sha256sum }}
 #   tb-sync:  {{ include "dot_local/bin/executable_tb-sync" | sha256sum }}
 set -euo pipefail
 
