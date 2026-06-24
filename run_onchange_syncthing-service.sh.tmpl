@@ -1,13 +1,23 @@
 {{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
 {{ if has "personal" $tags -}}
+{{- /*
+  Whether the age identity exists on this machine. We decrypt the syncthing
+  secrets ONLY when it does — otherwise `decrypt` crashes the whole `chezmoi
+  apply` (the failure is at template-render time, and run_onchange renders on
+  every apply). Embedding the yes/no result in a comment below also changes the
+  rendered script content when the key later appears, so run_onchange re-fires
+  automatically and writes config.xml then.
+*/ -}}
+{{- $ageKey := printf "%s/.config/age/chezmoi-key.txt" .chezmoi.homeDir -}}
+{{- $hasKey := stat $ageKey -}}
 #!/usr/bin/env bash
-
-echo "--- Writing config.xml ---"
+# age key present at render time: {{ if $hasKey }}yes{{ else }}no{{ end }}
 
 CONFIG_FILE="$HOME/.config/syncthing/config.xml"
 
-{{- $secrets_content := include ".secrets/syncthing_secrets.json.age" | decrypt }}
-{{- $secrets := $secrets_content | fromJson }}
+{{ if $hasKey -}}
+echo "--- Writing config.xml ---"
+{{- $secrets := include ".secrets/syncthing_secrets.json.age" | decrypt | fromJson }}
 
 cat > "$CONFIG_FILE" << 'EOF'
 <configuration version="37">
@@ -39,6 +49,10 @@ cat > "$CONFIG_FILE" << 'EOF'
   </options>
 </configuration>
 EOF
+{{- else }}
+echo "⚠ age key not found ({{ $ageKey }}); skipping syncthing config.xml."
+echo "  Add the key and re-run 'chezmoi apply' to write it (this script will re-fire)."
+{{- end }}
 
 echo "--- Managing Syncthing User Service ---"
 
