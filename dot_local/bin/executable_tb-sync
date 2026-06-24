@@ -70,7 +70,8 @@ WANT = re.compile(
     r"mail\.accountmanager\.|mail\.account\.account\d+\.|mail\.account\.lastKey|"
     r"mail\.identity\.id\d+\.|mail\.server\.server\d+\.|"
     r"mail\.smtpserver\.|mail\.smtpservers|mail\.root\.\w+-rel|"
-    r"mailnews\.tags\.|mailnews\.default_sort_order"
+    r"mailnews\.tags\.|mailnews\.default_sort_order|"
+    r"calendar\.registry\.|calendar\.list\."    # calendars (filtered below)
     r")"
 )
 # Machine-specific keys to drop even if they match WANT.
@@ -142,20 +143,36 @@ def write_config(src: Path, name: str, data: bytes) -> bool:
     return True
 
 
+CAL_TYPE = re.compile(r'^user_pref\("calendar\.registry\.([a-f0-9-]+)\.type", "(\w+)"')
+
+
 def curate(prefs: Path) -> str:
     """Build the curated user.js text from a live prefs.js."""
     if not prefs.is_file():
         die(f"live prefs.js not found at {prefs}")
+    text = prefs.read_text()
+
+    # Local storage calendars (moz-storage-calendar://) are machine-local data,
+    # not Google — drop their whole registry block; keep only network (caldav).
+    local_cals = {m.group(1) for ln in text.splitlines()
+                  if (m := CAL_TYPE.match(ln)) and m.group(2) != "caldav"}
+
     lines = [
-        ln for ln in prefs.read_text().splitlines()
+        ln for ln in text.splitlines()
         if WANT.match(ln) and not DROP.search(ln)
+        and not any(f"calendar.registry.{uid}." in ln for uid in local_cals)
     ]
+
     tags = [ln for ln in lines if "mailnews.tags" in ln or "default_sort_order" in ln]
-    mail = [ln for ln in lines if ln not in tags]
+    cals = [ln for ln in lines if ln.startswith('user_pref("calendar.')]
+    mail = [ln for ln in lines if ln not in tags and ln not in cals]
 
     out = [HEADER, ""]
     out += ["// --- Accounts / identities / servers / SMTP --------------------------------"]
     out += mail
+    if cals:
+        out += ["", "// --- Calendars (CalDAV) ----------------------------------------------------"]
+        out += cals
     if tags:
         out += ["", "// --- Tags / labels + default sort ------------------------------------------"]
         out += tags
