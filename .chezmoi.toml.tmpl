@@ -1,6 +1,13 @@
+{{- $data := include ".chezmoidata/packages.yaml" | fromYaml -}}
+{{- $recipients := list -}}
+{{- range $name, $machine := $data.machines -}}
+{{-   if hasKey $machine "age_recipient" -}}
+{{-     $recipients = append $recipients $machine.age_recipient -}}
+{{-   end -}}
+{{- end -}}
 encryption = "age"
 
 [age]
-    identity = "~/.config/age/chezmoi-key.txt"
-    recipient = "age1vlkm2j6rayd6uclgtdgdu2qwzrthk7d6fec64hmr0d02v9nueyqs6qu472"
-
+    identity = "~/.ssh/id_ed25519"
+    recipients = [{{ range $i, $r := $recipients }}{{ if $i }}, {{ end }}{{ $r | quote }}{{ end }}]
+    armor = true

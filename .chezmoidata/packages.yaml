@@ -177,6 +177,7 @@ machines:
   amjad-fed:
     distro: fedora
     tags: [dev, personal]
+    age_recipient: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGRGvFgz+AH8SllcU1ZRbVw5cyfzCOo5gRuxu+DLMLHn"
 
     packages:
       dnf:
@@ -220,7 +221,8 @@ machines:
 
   amjad-new-red:
     distro: fedora
-    tags: [dev]
+    tags: [dev, personal]
+    age_recipient: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKpJhd6uXMEgUCrxHD7TcxtphhoPyPBTe7xKsv7T/mgi"
 
     packages:
       dnf:
