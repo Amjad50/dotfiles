@@ -8,7 +8,7 @@
   rendered script content when the key later appears, so run_onchange re-fires
   automatically and writes config.xml then.
 */ -}}
-{{- $ageKey := printf "%s/.config/age/chezmoi-key.txt" .chezmoi.homeDir -}}
+{{- $ageKey := printf "%s/.ssh/id_ed25519" .chezmoi.homeDir -}}
 {{- $hasKey := stat $ageKey -}}
 #!/usr/bin/env bash
 # age key present at render time: {{ if $hasKey }}yes{{ else }}no{{ end }}

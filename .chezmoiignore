@@ -1,5 +1,5 @@
-.config/age/chezmoi-key.txt
 .config/syncthing
+docs
 
 {{- /* KDE/Plasma configs only make sense on `personal` (KDE laptop) machines. */}}
 {{- $tags := concat (list "default") (dig "tags" list (dig "machines" .chezmoi.hostname dict .)) | uniq }}
@@ -8,4 +8,10 @@
 .config/kxkbrc
 .config/dolphinrc
 .config/konsolerc
+{{- end }}
+
+{{- if not (stat (printf "%s/.ssh/id_ed25519" .chezmoi.homeDir)) }}
+.thunderbird/.chezmoi-tb/user.js
+.thunderbird/.chezmoi-tb/virtualFolders.dat
+.thunderbird/.chezmoi-tb/mailViews.dat
 {{- end }}
