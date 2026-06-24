@@ -1,0 +1,82 @@
+{{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
+{{- $hasKey := stat (printf "%s/.ssh/id_ed25519" .chezmoi.homeDir) -}}
+{{ if and (has "personal" $tags) $hasKey -}}
+#!/usr/bin/env bash
+# rerun hashes:
+#   user.js:  {{ include "private_dot_thunderbird/dot_chezmoi-tb/encrypted_user.js.age" | sha256sum }}
+#   keymap:   {{ include "private_dot_thunderbird/dot_chezmoi-tb/tbkeys-keymap.json" | sha256sum }}
+#   exts:     {{ include "private_dot_thunderbird/dot_chezmoi-tb/extensions.md" | sha256sum }}
+#   vfolders: {{ include "private_dot_thunderbird/dot_chezmoi-tb/encrypted_virtualFolders.dat.age" | sha256sum }}
+#   views:    {{ include "private_dot_thunderbird/dot_chezmoi-tb/encrypted_mailViews.dat.age" | sha256sum }}
+#   tb-sync:  {{ include "dot_local/bin/executable_tb-sync" | sha256sum }}
+set -euo pipefail
+
+TB_DIR="$HOME/.thunderbird"
+PROFILE="main"
+PROFILE_DIR="$TB_DIR/$PROFILE"
+PROFILES_INI="$TB_DIR/profiles.ini"
+SRC="$TB_DIR/.chezmoi-tb"            # chezmoi-staged declarative source files
+TB_SYNC="$HOME/.local/bin/tb-sync"  # the Python sync tool (also chezmoi-managed)
+
+echo "→ Thunderbird declarative setup..."
+
+if pgrep -x thunderbird >/dev/null 2>&1; then
+    echo "⚠ Thunderbird is running — close it and re-run 'chezmoi apply'. Skipping."
+    exit 0
+fi
+
+if [[ ! -f "$SRC/user.js" ]]; then
+    echo "❌ $SRC/user.js missing (chezmoi didn't stage it?)."
+    exit 1
+fi
+
+mkdir -p "$TB_DIR" "$PROFILE_DIR"
+
+# --- Pin `main` as the one default profile --------------------------------
+if [[ ! -f "$PROFILES_INI" ]] || ! grep -q "^Path=$PROFILE$" "$PROFILES_INI"; then
+    echo "  Writing profiles.ini (main = default)..."
+    cat > "$PROFILES_INI" <<EOF
+[Install3DDF446CE6CB1A45]
+Default=$PROFILE
+Locked=1
+
+[Profile0]
+Name=$PROFILE
+IsRelative=1
+Path=$PROFILE
+Default=1
+
+[General]
+StartWithLastProfile=1
+Version=2
+EOF
+else
+    echo "  profiles.ini already pins '$PROFILE'."
+fi
+
+# --- Place manual-step references (unique to this script) -----------------
+echo "  Placing extensions reference..."
+cp -f "$SRC/extensions.md" "$TB_DIR/extensions.md"
+
+# --- Copy the config (delegated to tb-sync — single source of truth) ------
+# Pass the staged source dir via TB_SYNC_SRC so tb-sync does NOT call `chezmoi`
+# itself (re-entrant `chezmoi` calls fail inside a chezmoi-run script).
+if [[ -x "$TB_SYNC" ]]; then
+    TB_SYNC_SRC="$SRC" "$TB_SYNC" load
+else
+    # tb-sync not deployed yet (first apply ordering) — fall back to a direct
+    # copy of the same files it would copy.
+    echo "  (tb-sync not found, copying directly)"
+    cp -f "$SRC/user.js"             "$PROFILE_DIR/user.js"
+    cp -f "$SRC/mailViews.dat"       "$PROFILE_DIR/mailViews.dat"
+    cp -f "$SRC/virtualFolders.dat"  "$PROFILE_DIR/virtualFolders.dat"
+    cp -f "$SRC/tbkeys-keymap.json"  "$TB_DIR/tbkeys-keymap.json"
+fi
+
+echo "✅ Done. Launch with plain 'thunderbird' (main is default)."
+echo "   First-machine manual steps:"
+echo "     1. Sign in to each Gmail account (OAuth)."
+echo "     2. Install the 3 add-ons listed in ~/.thunderbird/extensions.md"
+echo "     3. tbkeys: Add-ons → tbkeys-lite → Options → paste"
+echo "        ~/.thunderbird/tbkeys-keymap.json → Save."
+{{ end -}}

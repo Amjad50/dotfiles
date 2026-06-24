@@ -198,6 +198,12 @@ alias -- userlist='cut -d: -f1 /etc/passwd'
 alias -- vimdiff='nvim -d'
 alias -- wget='wget -c'
 
+# Thunderbird config <-> chezmoi (see ~/.local/bin/tb-sync). Close TB first.
+#   tb-save : capture live Thunderbird config (user.js + views/searches) into the repo
+#   tb-load : apply repo config back to Thunderbird
+alias -- tb-save='tb-sync save'
+alias -- tb-load='tb-sync load'
+
 # ============================================================================
 # 10. CUSTOM HELPER FUNCTIONS
 # ============================================================================
