@@ -10,7 +10,9 @@ docs
 .config/konsolerc
 {{- end }}
 
-{{- if not (stat (printf "%s/.ssh/id_ed25519" .chezmoi.homeDir)) }}
+{{- /* age (the binary, for SSH-key identities) must exist too, else chezmoi's
+       built-in age can't decrypt and aborts apply before packages install. */}}
+{{- if not (and (stat (printf "%s/.ssh/id_ed25519" .chezmoi.homeDir)) (lookPath "age")) }}
 .thunderbird/.chezmoi-tb/user.js
 .thunderbird/.chezmoi-tb/virtualFolders.dat
 .thunderbird/.chezmoi-tb/mailViews.dat

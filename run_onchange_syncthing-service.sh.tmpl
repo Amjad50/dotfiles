@@ -9,7 +9,7 @@
   automatically and writes config.xml then.
 */ -}}
 {{- $ageKey := printf "%s/.ssh/id_ed25519" .chezmoi.homeDir -}}
-{{- $hasKey := stat $ageKey -}}
+{{- $hasKey := and (stat $ageKey) (lookPath "age") -}}
 #!/usr/bin/env bash
 # age key present at render time: {{ if $hasKey }}yes{{ else }}no{{ end }}
 
@@ -19,6 +19,7 @@ CONFIG_FILE="$HOME/.config/syncthing/config.xml"
 echo "--- Writing config.xml ---"
 {{- $secrets := include ".secrets/syncthing_secrets.json.age" | decrypt | fromJson }}
 
+mkdir -p "$(dirname "$CONFIG_FILE")"
 cat > "$CONFIG_FILE" << 'EOF'
 <configuration version="37">
   <gui enabled="true" tls="false" debugging="false">

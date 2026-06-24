@@ -1,5 +1,5 @@
 {{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
-{{- $hasKey := stat (printf "%s/.ssh/id_ed25519" .chezmoi.homeDir) -}}
+{{- $hasKey := and (stat (printf "%s/.ssh/id_ed25519" .chezmoi.homeDir)) (lookPath "age") -}}
 {{ if and (has "personal" $tags) $hasKey -}}
 #!/usr/bin/env bash
 # rerun hashes:
