@@ -50,6 +50,7 @@ M.servers = {
   tinymist = {},
   slint_lsp = {},
   pyrefly = {},
+  ols = {},
 }
 
 local function first_executable(candidates)

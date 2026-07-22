@@ -4,7 +4,7 @@ local ENSURE_INSTALLED = {
   "markdown", "markdown_inline",
   "html", "css", "javascript", "typescript", "tsx",
   "rust", "python", "dockerfile", "prisma", "regex",
-  "nix", "go", "zig", "typst",
+  "nix", "go", "zig", "typst", "odin"
 }
 
 return {
