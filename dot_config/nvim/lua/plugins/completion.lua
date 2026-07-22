@@ -8,40 +8,23 @@ return {
         preset = "super-tab",
         ["<Tab>"] = {
           function(cmp)
-            local ok, suggestion = pcall(require, "supermaven-nvim.completion_preview")
-            if
-              ok
-            and suggestion.has_suggestion()
-            and vim.api.nvim_buf_get_option(0, "modifiable")
-            and not vim.api.nvim_buf_get_option(0, "readonly")
-          then
-              vim.schedule(function()
-                local accept_ok, accept_err = pcall(suggestion.on_accept_suggestion)
-                if not accept_ok then
-                  vim.schedule(function()
-                    if cmp.snippet_active() then
-                      cmp.accept()
-                    else
-                      cmp.select_and_accept()
-                    end
-                  end)
-                  vim.notify(
-                    ("Supermaven accept failed: %s"):format(accept_err),
-                    vim.log.levels.WARN,
-                    { title = "Supermaven" }
-                  )
-                end
-              end)
+            local ok, virtualtext = pcall(require, "minuet.virtualtext")
+            if ok and virtualtext.action.is_visible() then
+              virtualtext.action.accept()
               return true
             end
 
             if cmp.snippet_active() then
               return cmp.accept()
             end
+
             return cmp.select_and_accept()
           end,
           "snippet_forward",
           "fallback",
+        },
+        ["<A-y>"] = {
+          function(cmp) cmp.show({ providers = { "minuet" } }) end,
         },
         ["<CR>"] = {
           function(cmp)
@@ -64,7 +47,16 @@ return {
       },
       signature = { enabled = true, window = { border = "rounded" } },
       sources = {
-        default = { "lsp", "path", "buffer" },
+        default = { "lsp", "path", "buffer", "minuet" },
+        providers = {
+          minuet = {
+            name = "Minuet",
+            module = "minuet.blink",
+            async = true,
+            timeout_ms = 2500,
+            score_offset = 50,
+          },
+        },
       },
       fuzzy = { implementation = "prefer_rust_with_warning" },
     },
