@@ -6,6 +6,43 @@ return {
     opts = {
       keymap = {
         preset = "super-tab",
+        ["<Tab>"] = {
+          function(cmp)
+            local ok, suggestion = pcall(require, "supermaven-nvim.completion_preview")
+            if
+              ok
+            and suggestion.has_suggestion()
+            and vim.api.nvim_buf_get_option(0, "modifiable")
+            and not vim.api.nvim_buf_get_option(0, "readonly")
+          then
+              vim.schedule(function()
+                local accept_ok, accept_err = pcall(suggestion.on_accept_suggestion)
+                if not accept_ok then
+                  vim.schedule(function()
+                    if cmp.snippet_active() then
+                      cmp.accept()
+                    else
+                      cmp.select_and_accept()
+                    end
+                  end)
+                  vim.notify(
+                    ("Supermaven accept failed: %s"):format(accept_err),
+                    vim.log.levels.WARN,
+                    { title = "Supermaven" }
+                  )
+                end
+              end)
+              return true
+            end
+
+            if cmp.snippet_active() then
+              return cmp.accept()
+            end
+            return cmp.select_and_accept()
+          end,
+          "snippet_forward",
+          "fallback",
+        },
         ["<CR>"] = {
           function(cmp)
             if cmp.is_visible() then
