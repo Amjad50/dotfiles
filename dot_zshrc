@@ -16,6 +16,11 @@ if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
         print -P "%F{160} The clone has failed.%f%b"
 fi
 
+# Opt out of Zinit's legacy aliases (zi, zini, zpl, zplg). Zinit sets `alias zi=zinit`
+# on load, and zsh expands aliases before functions, so it would shadow zoxide's `zi`.
+typeset -gA ZINIT
+ZINIT[NO_ALIASES]=1
+
 # Source Zinit
 source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
 autoload -Uz _zinit
@@ -162,6 +167,11 @@ fi
 
 if [[ -d "$HOME/.turso" ]]; then
   PATH="$HOME/.turso:$PATH"
+fi
+
+if [[ -d "$HOME/.local/share/pnpm" ]]; then
+  export PNPM_HOME="$HOME/.local/share/pnpm"
+  PATH="$PNPM_HOME/bin:$PATH"
 fi
 
 export EDITOR=/usr/bin/nvim
