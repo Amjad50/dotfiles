@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""Merge personal preferences without replacing this PC's setup metadata."""
+import json
+import sys
+
+original = sys.stdin.read()
+config = json.loads(original) if original.strip() else {}
+if not isinstance(config, dict):
+    raise SystemExit("hyprwhspr config.json must contain a JSON object")
+
+# Keep local keyboard/microphone choices, credentials and dependency metadata.
+# New PCs use automatic keyboard discovery rather than this laptop's allowlist.
+preferences = json.loads(r'''{{ includeTemplate "hyprwhspr-config.json" . }}''')
+config.update(preferences)
+print(json.dumps(config, indent=2, ensure_ascii=False))

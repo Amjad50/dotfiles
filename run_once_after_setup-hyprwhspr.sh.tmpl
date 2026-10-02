@@ -1,0 +1,52 @@
+{{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
+{{ if and (eq .chezmoi.os "linux") (has "personal" $tags) -}}
+#!/usr/bin/env bash
+# Personal speech-to-text setup. Preferences are applied before this after-hook.
+# Let upstream setup handle dependencies, permissions and machine-local services.
+set -euo pipefail
+
+if command -v hyprwhspr >/dev/null 2>&1 || [[ -x "$HOME/.local/bin/hyprwhspr" ]]; then
+    echo "✓ hyprwhspr is already installed; leaving the installation and service alone."
+    echo "  If preferences changed, restart it with: hyprwhspr systemd restart"
+    exit 0
+fi
+
+# Fresh setup needs sudo and interactive permission/audio choices. Fail rather
+# than silently marking this run_once hook complete when applying over SSH/CI.
+if ! { : </dev/tty; } 2>/dev/null; then
+    echo "hyprwhspr: run chezmoi apply from a terminal for first-time setup." >&2
+    exit 1
+fi
+
+if command -v pacman >/dev/null 2>&1; then
+    # Use the git package: Orukeet support may be newer than the stable release.
+    if command -v yay >/dev/null 2>&1; then
+        yay -S --needed hyprwhspr-git </dev/tty
+    elif command -v paru >/dev/null 2>&1; then
+        paru -S --needed hyprwhspr-git </dev/tty
+    else
+        echo "Install hyprwhspr-git with an AUR helper, then run hyprwhspr setup." >&2
+        echo "Re-run chezmoi apply afterwards." >&2
+        exit 1
+    fi
+    executable="$(command -v hyprwhspr)"
+else
+    # Same source-install layout as the upstream bootstrap. Never pull/reset a
+    # checkout: an interrupted install may already contain local changes.
+    source_dir="${XDG_DATA_HOME:-$HOME/.local/share}/hyprwhspr/src"
+    if [[ ! -d "$source_dir/.git" ]]; then
+        mkdir -p "$(dirname "$source_dir")"
+        git clone https://github.com/goodroot/hyprwhspr.git "$source_dir"
+    fi
+    bash "$source_dir/scripts/install-deps.sh" </dev/tty
+    executable="$source_dir/bin/hyprwhspr"
+fi
+
+# The pre-seeded config selects ONNX-ASR / Orukeet, F9, ducking and toggle mode.
+# Confirm these defaults, permissions and optional OSD in the upstream wizard.
+# It renders the systemd unit using this PC's paths (no /home/amjad hardcoding).
+"$executable" setup </dev/tty
+
+echo "✓ hyprwhspr setup finished. Log out/in if group permissions changed."
+echo "  Use F9 to start/stop dictation; run hyprwhspr validate if needed."
+{{ end -}}
