@@ -27,6 +27,7 @@ return {
         config = {
           gui = {
             screenMode = "normal",
+            showCommandLog = false,
             sidePanelWidth = 0.25,
             theme = {
               unstagedChangesColor = { "red" },
