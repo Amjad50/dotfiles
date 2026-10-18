@@ -169,6 +169,10 @@ if [[ -d "$HOME/.turso" ]]; then
   PATH="$HOME/.turso:$PATH"
 fi
 
+if [[ -d "$HOME/go/bin" ]]; then
+  PATH="$HOME/go/bin:$PATH"
+fi
+
 if [[ -d "$HOME/AndroidSdk" ]]; then
   export ANDROID_HOME="$HOME/AndroidSdk"
   export ANDROID_SDK_ROOT="$HOME/AndroidSdk"
