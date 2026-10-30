@@ -1,6 +1,11 @@
 .config/syncthing
 docs
 
+{{- /* The Claude Desktop updater uses Fedora's RPM/DNF package management. */}}
+{{- if not (and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora")) }}
+.local/bin/update-claude
+{{- end }}
+
 {{- /* KDE/Plasma configs only make sense on `personal` (KDE laptop) machines. */}}
 {{- $tags := concat (list "default") (dig "tags" list (dig "machines" .chezmoi.hostname dict .)) | uniq }}
 {{- if not (has "personal" $tags) }}

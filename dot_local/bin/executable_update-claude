@@ -1,0 +1,414 @@
+#!/usr/bin/env python3
+"""Install/update Anthropic's signed Linux .deb as a local Fedora RPM."""
+
+import argparse
+import datetime as dt
+from email import policy
+from email.parser import Parser
+import email.utils
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import platform
+import re
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+
+
+BASE = "https://downloads.claude.ai/claude-desktop/apt/stable"
+KEY_URL = "https://downloads.claude.ai/claude-desktop/key.asc"
+FINGERPRINT = "31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE"
+RELEASE = "1.local"
+ARCHES = {"x86_64": "amd64", "aarch64": "arm64"}
+FEDORA_REPOS = ["--disablerepo=*", "--enablerepo=fedora", "--enablerepo=updates"]
+TOOL_PACKAGES = {"curl": "curl", "gpg": "gnupg2", "gpgv": "gnupg2",
+                 "rpm": "rpm", "rpmkeys": "rpm", "ar": "binutils", "rpmbuild": "rpm-build"}
+DEPENDENCIES = {
+    "libgtk-3-0": "gtk3", "libnotify4": "libnotify", "libnss3": "nss",
+    "xdg-utils": "xdg-utils", "libatspi2.0-0": "at-spi2-core",
+    "libdrm2": "libdrm", "libgbm1": "mesa-libgbm",
+    "libxcb-dri3-0": "libxcb", "libsecret-1-0": "libsecret",
+    "kde-cli-tools": "kde-cli-tools", "libglib2.0-bin": "glib2",
+    "libc6": "glibc", "libxtst6": "libXtst", "libuuid1": "libuuid",
+    "libpipewire-0.3-0": "pipewire-libs", "xdg-desktop-portal": "xdg-desktop-portal",
+    "xdg-desktop-portal-gtk": "(xdg-desktop-portal-gtk or xdg-desktop-portal-gnome or xdg-desktop-portal-kde)",
+}
+
+
+def require(condition, message):
+    """Enforce an invariant even when Python runs with assertions disabled."""
+    if not condition:
+        raise RuntimeError(message)
+
+
+def run(args, **kwargs):
+    return subprocess.run([str(a) for a in args], check=True, **kwargs)
+
+
+def output(args):
+    return run(args, capture_output=True, text=True).stdout
+
+
+def only(items, description):
+    items = list(items)
+    require(len(items) == 1, f"Expected exactly one {description}")
+    return items[0]
+
+
+def require_fedora():
+    require(platform.system() == "Linux", "update-claude supports Fedora Linux only")
+    try:
+        distro = platform.freedesktop_os_release().get("ID")
+    except OSError:
+        raise RuntimeError("Cannot identify this system as Fedora Linux")
+    require(distro == "fedora", "update-claude supports Fedora Linux only")
+    require(not Path("/run/ostree-booted").exists(), "Fedora Atomic/rpm-ostree is not supported")
+    require(sys.version_info >= (3, 12), "Python 3.12 or newer is required for safe archive extraction")
+
+
+def require_tools(args):
+    tools = ["curl", "gpg", "gpgv", "rpm"]
+    if not args.check:
+        tools += ["ar", "rpmbuild", "rpmkeys"]
+    missing = [tool for tool in tools if not shutil.which(tool)]
+    if not args.check and not args.build_only:
+        require(shutil.which("sudo") and shutil.which("dnf"), "Fedora's sudo and dnf commands are required")
+        if missing:
+            packages = sorted({TOOL_PACKAGES[tool] for tool in missing})
+            print("Installing Fedora prerequisites: " + " ".join(packages), flush=True)
+            run(["sudo", "dnf", *FEDORA_REPOS, "-y", "install", *packages])
+            missing = [tool for tool in tools if not shutil.which(tool)]
+    require(not missing, "Missing tools: " + ", ".join(missing) + ". Run update-claude to install prerequisites.")
+
+
+def sha256(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def download(url, dest, max_size, expected=None):
+    if expected and dest.exists():
+        try:
+            verify_file(dest, *expected)
+            return dest
+        except RuntimeError:
+            pass  # Replace a stale/corrupt cache entry with a verified download.
+    partial = dest.with_name(dest.name + ".part")
+    try:
+        run(["curl", "--fail", "--silent", "--show-error", "--location",
+             "--proto", "=https", "--proto-redir", "=https", "--retry", "2",
+             "--connect-timeout", "15", "--max-time", "300",
+             "--max-filesize", str(max_size), "--output", partial, url])
+        partial.replace(dest)
+    finally:
+        partial.unlink(missing_ok=True)
+    if expected:
+        verify_file(dest, *expected)
+    return dest
+
+
+def paragraphs(text):
+    """Parse Debian's RFC822-style records; reject malformed/duplicate fields."""
+    for paragraph in re.split(r"\n\s*\n", text.strip()):
+        fields = {}
+        message = Parser(policy=policy.strict).parsestr(paragraph, headersonly=True)
+        for key, value in message.raw_items():
+            require(key not in fields, f"Duplicate repository field: {key}")
+            fields[key] = "\n".join(line.strip() for line in value.splitlines())
+        if fields:
+            yield fields
+
+
+def version_key(version):
+    # Fail clearly if upstream changes its version scheme instead of guessing.
+    require(re.fullmatch(r"[0-9]+(?:\.[0-9]+)*", version), f"Unsupported version format: {version!r}")
+    return tuple(int(part) for part in version.split("."))
+
+
+def signed_release(work):
+    home = work / "gnupg"
+    home.mkdir(mode=0o700)
+    key, keyring = work / "key.asc", work / "key.gpg"
+    download(KEY_URL, key, 65536)
+    # Let GPG select the exact pinned key; other keys in the download aren't trusted.
+    gpg = ["gpg", "--homedir", home, "--batch"]
+    run([*gpg, "--import", key], capture_output=True)
+    with keyring.open("wb") as stream:
+        run([*gpg, "--export", FINGERPRINT + "!"], stdout=stream, stderr=subprocess.PIPE)
+    require(keyring.stat().st_size, "Anthropic signing key does not match the published fingerprint")
+    download(BASE + "/dists/stable/InRelease", work / "InRelease", 1048576)
+    verification = output(["gpgv", "--homedir", home, "--status-fd", "1", "--keyring", keyring,
+                           "--output", work / "Release", work / "InRelease"])
+    verify_signer(verification)
+    release = only(paragraphs((work / "Release").read_text()), "signed repository record")
+    validate_dates(release)
+    return release
+
+
+def verify_signer(status):
+    bad = {"BADSIG", "ERRSIG", "EXPKEYSIG", "EXPSIG", "REVKEYSIG", "KEYEXPIRED", "SIGEXPIRED", "KEYREVOKED"}
+    valid = False
+    for line in status.splitlines():
+        words = line.split()
+        if len(words) < 2 or words[0] != "[GNUPG:]":
+            continue
+        require(words[1] not in bad, "Invalid, revoked, or expired Anthropic repository signature")
+        if words[1] == "VALIDSIG" and len(words) >= 11:
+            valid = words[2] == FINGERPRINT or words[-1] == FINGERPRINT
+    require(valid, "Repository was not signed by Anthropic's pinned key")
+
+
+def validate_dates(release):
+    now = dt.datetime.now(dt.timezone.utc)
+    created = email.utils.parsedate_to_datetime(release["Date"])
+    expires = email.utils.parsedate_to_datetime(release["Valid-Until"])
+    require(created.tzinfo and expires.tzinfo, "Signed repository dates must include timezones")
+    require(expires > now and expires > created, "Anthropic's signed repository metadata has expired")
+    require(created <= now + dt.timedelta(minutes=10), "Signed repository metadata is dated in the future")
+
+
+def verify_file(path, digest, size):
+    require(re.fullmatch(r"[a-fA-F0-9]{64}", digest), "Missing or malformed SHA256 checksum")
+    require(not path.is_symlink() and path.stat().st_size == int(size) and sha256(path) == digest.lower(),
+            f"Size or SHA256 verification failed: {path.name}")
+
+
+def latest_package(work, release, deb_arch):
+    target = f"main/binary-{deb_arch}/Packages"
+    entries = [line.split() for line in release.get("SHA256", "").splitlines()]
+    digest, size, _ = only((e for e in entries if len(e) == 3 and e[2] == target), target)
+    index = download(BASE + "/dists/stable/" + target, work / "Packages", 67108864,
+                     expected=(digest, size))
+    packages = [p for p in paragraphs(index.read_text())
+                if p.get("Package") == "claude-desktop" and p.get("Architecture") == deb_arch]
+    require(packages, "No official Claude Desktop Linux package found for this architecture")
+    package = max(packages, key=lambda p: version_key(p["Version"]))
+    filename = package["Filename"]
+    require(re.fullmatch(r"pool/main/c/claude-desktop/claude-desktop_[0-9.]+_(amd64|arm64)\.deb", filename),
+            "Unexpected official package path")
+    return package
+
+
+def extract_payload(deb, package, work):
+    members = output(["ar", "t", deb]).splitlines()
+    archives = {}
+    for kind in ("data", "control"):
+        name = only((m for m in members if re.fullmatch(rf"{kind}\.tar\.(xz|gz|zst)", m)), kind + " archive")
+        run(["ar", "x", "--output", work, deb, name])
+        archives[kind] = work / name
+    with tarfile.open(archives["control"]) as archive:
+        names = [m for m in archive if m.name.removeprefix("./") == "control" and m.isfile()]
+        control = only(names, "package control file")
+        fields = only(paragraphs(archive.extractfile(control).read().decode()), "package identity")
+        require(all(fields.get(k) == package[k] for k in ("Package", "Version", "Architecture")),
+                "Downloaded package identity differs from the signed repository index")
+    stage = work / "payload"
+    stage.mkdir()
+    with tarfile.open(archives["data"]) as archive:
+        for member in archive.getmembers():
+            path = PurePosixPath(member.name)
+            require(not path.is_absolute() and ".." not in path.parts and (not path.parts or path.parts[0] == "usr"),
+                    f"Unexpected payload path: {member.name}")
+            require(member.isfile() or member.isdir() or member.issym() or member.islnk(),
+                    "Unsupported special file in package payload")
+        archive.extractall(stage, filter="data")
+    # tar's safe data filter clears setuid; restore the official Chromium helper.
+    sandbox = stage / "usr/lib/claude-desktop/chrome-sandbox"
+    require(sandbox.is_file() and not sandbox.is_symlink(), "Official Chromium sandbox helper is missing")
+    sandbox.chmod(0o4755)
+    return stage, fields
+
+
+def integrate(stage):
+    root = stage / "usr/lib/claude-desktop/resources"
+    copies = {
+        "linux-mime/com.anthropic.Claude.xml": "usr/share/mime/packages/com.anthropic.Claude.xml",
+        "gnome-search-provider/com.anthropic.Claude.SearchProvider.service": "usr/share/dbus-1/services/com.anthropic.Claude.SearchProvider.service",
+        "gnome-search-provider/com.anthropic.Claude.search-provider.ini": "usr/share/gnome-shell/search-providers/com.anthropic.Claude.search-provider.ini",
+    }
+    for src, dest in copies.items():
+        if (root / src).is_file():
+            target = stage / dest
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(root / src, target)
+            target.chmod(0o644)
+    if (root / "bin/ccd").is_file():
+        (stage / "usr/bin/ccd").symlink_to("../lib/claude-desktop/resources/bin/ccd")
+
+
+def rpm_dependencies(control):
+    result = {"alsa-lib", "ca-certificates", "desktop-file-utils", "hicolor-icon-theme", "shared-mime-info"}
+    for group in control.get("Depends", "").split(","):
+        match = None
+        for alternative in group.split("|"):
+            name = alternative.strip().split()[0]
+            if name in DEPENDENCIES:
+                match = DEPENDENCIES[name]
+                constraint = re.search(r"\((>=)\s*([0-9.]+)\)", alternative)
+                if constraint:
+                    match += " >= " + constraint[2]
+                break
+        require(match is not None, f"New Debian dependency needs a Fedora mapping: {group.strip()}")
+        result.add(match)
+    return sorted(result)
+
+
+def manifest(stage):
+    return {"/" + str(p.relative_to(stage)): (os.readlink(p) if p.is_symlink() else sha256(p))
+            for p in stage.rglob("*") if p.is_symlink() or p.is_file()}
+
+
+def verify_rpm(rpm, expected):
+    listing = output(["rpm", "-qp", "--qf", "[%{FILENAMES}\t%{FILEDIGESTS}\t%{FILELINKTOS}\n]", rpm])
+    actual = {}
+    for line in listing.splitlines():
+        path, digest, link = line.split("\t")
+        if digest or link:
+            actual[path] = link or digest
+    require(actual == expected, "Built RPM does not preserve the official payload and desktop integration files")
+    output(["rpmkeys", "--checksig", rpm])
+
+
+def build_rpm(deb, package, work, cache, rpm_arch):
+    stage, control = extract_payload(deb, package, work)
+    integrate(stage)
+    receipt = stage / "usr/share/doc/claude-desktop/fedora-source.json"
+    receipt.parent.mkdir(parents=True, exist_ok=True)
+    receipt.write_text(json.dumps({"deb_sha256": package["SHA256"],
+                                   "source": BASE + "/" + package["Filename"],
+                                   "signing_fingerprint": FINGERPRINT,
+                                   "packaging_release": RELEASE}, indent=2) + "\n")
+    expected = manifest(stage)
+    (work / "SPECS").mkdir()
+    # RPM owns these complete trees; list shared-directory files individually.
+    trees = ("/usr/lib/claude-desktop", "/usr/share/doc/claude-desktop")
+    files = [f'"{path}"' for path in trees]
+    for path in sorted(expected):
+        if not path.startswith(tuple(tree + "/" for tree in trees)):
+            files.append(f'"{path}"')
+    requirements = "\n".join("Requires: " + item for item in rpm_dependencies(control))
+    vm_packages = "qemu-system-x86-core edk2-ovmf virtiofsd" if rpm_arch == "x86_64" else "qemu-system-aarch64-core edk2-aarch64 virtiofsd"
+    spec = f"""%global debug_package %{{nil}}
+%global __os_install_post %{{nil}}
+%global _build_id_links none
+%global _binary_filedigest_algorithm 8
+%global _binary_payload w3.zstdio
+Name: claude-desktop
+Version: {package['Version']}
+Release: {RELEASE}
+Summary: Anthropic Claude Desktop (official Linux build, locally packaged)
+License: LicenseRef-Proprietary
+URL: https://claude.ai
+BuildArch: {rpm_arch}
+AutoReqProv: no
+{requirements}
+Recommends: bubblewrap socat openssh-clients {vm_packages}
+Recommends: (libayatana-appindicator-gtk3 or libappindicator-gtk3)
+Suggests: gjs
+
+%description
+Anthropic's official Linux desktop package, verified against its signed apt
+repository and converted locally. Application files are unmodified.
+Update with update-claude. This RPM is not published or signed by Anthropic.
+
+%install
+mkdir -p "%{{buildroot}}"
+cp -a "%{{_topdir}}/payload/." "%{{buildroot}}/"
+
+%files
+%defattr(-,root,root,-)
+{chr(10).join(files)}
+"""
+    spec_path = work / "SPECS/claude-desktop.spec"
+    spec_path.write_text(spec)
+    log = cache / "last-build.log"
+    print("Building local RPM; log: " + str(log), flush=True)
+    with log.open("w") as stream:
+        try:
+            run(["rpmbuild", "-bb", "--define", f"_topdir {work}", spec_path], stdout=stream, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            print(log.read_text()[-6000:], file=sys.stderr)
+            raise
+    built = only((work / "RPMS" / rpm_arch).glob("*.rpm"), "built RPM")
+    verify_rpm(built, expected)
+    rpm = cache / built.name
+    shutil.copyfile(built, rpm)
+    (cache / "payload-sha256.json").write_text(json.dumps(expected, indent=2) + "\n")
+    return rpm
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument("--check", action="store_true", help="check the latest signed release without installing")
+    actions.add_argument("--build-only", action="store_true", help="verify and build the RPM without installing")
+    parser.add_argument("--force", action="store_true", help="rebuild/reinstall the current version")
+    args = parser.parse_args()
+    require_fedora()
+    require(os.geteuid() != 0, "Run as your normal user; only dnf installation uses sudo")
+    rpm_arch = platform.machine()
+    require(rpm_arch in ARCHES, "Only x86_64 and aarch64 are supported")
+    require_tools(args)
+    cache = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "claude-desktop-rpm"
+    cache.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with (cache / "update.lock").open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError("Another update-claude process is running")
+        with tempfile.TemporaryDirectory(prefix="build-", dir=cache) as directory:
+            work = Path(directory)
+            release = signed_release(work)
+            package = latest_package(work, release, ARCHES[rpm_arch])
+            version = package["Version"]
+            installed_result = subprocess.run(["rpm", "-q", "--qf", "%{VERSION}\t%{RELEASE}", "claude-desktop"], capture_output=True, text=True)
+            installed = installed_result.stdout.split("\t") if installed_result.returncode == 0 else None
+            print(f"Verified Anthropic Linux release: {version}", flush=True)
+            if installed:
+                require(version_key(installed[0]) <= version_key(version), "Refusing to downgrade Claude Desktop")
+            same_rpm_version = installed == [version, RELEASE]
+            receipt = Path("/usr/share/doc/claude-desktop/fedora-source.json")
+            try:
+                installed_source = json.loads(receipt.read_text()).get("deb_sha256")
+            except (OSError, ValueError):
+                installed_source = None
+            current = same_rpm_version and installed_source == package["SHA256"]
+            if current and not args.force:
+                print(f"Claude Desktop {version} is already up to date.")
+                return
+            if args.check:
+                print("Update available." if installed else "Claude Desktop is not installed.")
+                return
+            print(f"{'Updating from ' + installed[0] + ' to' if installed else 'Installing'} {version}.", flush=True)
+            deb = download(BASE + "/" + package["Filename"], cache / Path(package["Filename"]).name,
+                           int(package["Size"]), expected=(package["SHA256"], package["Size"]))
+            rpm = build_rpm(deb, package, work, cache, rpm_arch)
+            provenance = {"source": BASE + "/" + package["Filename"], "version": version,
+                          "deb_sha256": package["SHA256"], "rpm_sha256": sha256(rpm),
+                          "signing_fingerprint": FINGERPRINT, "repository_date": release["Date"]}
+            rpm.with_suffix(".provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
+            print("Verified RPM: " + str(rpm), flush=True)
+            if args.build_only:
+                return
+            action = "reinstall" if same_rpm_version else "install"
+            run(["sudo", "dnf", *FEDORA_REPOS,
+                 "--setopt=localpkg_gpgcheck=0", "-y", action, rpm])
+            output(["rpm", "-V", "claude-desktop"])
+            print(f"Claude Desktop {version} installed. Launch Claude from the application menu.")
+            print("Future updates: update-claude")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (RuntimeError, OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError, tarfile.TarError) as error:
+        print(f"update-claude: {error}", file=sys.stderr)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\nUpdate cancelled.", file=sys.stderr)
+        sys.exit(130)
