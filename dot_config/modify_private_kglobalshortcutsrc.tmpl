@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+# Enforce only your own shortcuts on ~/.config/kglobalshortcutsrc and keep
+# everything else as KDE writes it, so KDE's churn never shows up in chezmoi.
+#   Your shortcuts: .chezmoitemplates/kde/kglobalshortcutsrc.overrides
+#   Update them from the live file: python3 ~/.local/share/chezmoi/.bin/kde-capture
+# On Wayland, KWin reads this file at login, so changes here apply after you
+# log out and back in.
+{{ include ".chezmoitemplates/kde/kini.py" }}
+
+OVERRIDES = r"""
+{{ include ".chezmoitemplates/kde/kglobalshortcutsrc.overrides" }}
+"""
+
+main(OVERRIDES, shortcuts=True)

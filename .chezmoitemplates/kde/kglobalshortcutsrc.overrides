@@ -1,0 +1,201 @@
+# Your KDE global shortcuts. Only these are enforced on ~/.config/kglobalshortcutsrc;
+# everything else in that file is left as KDE writes it.
+#   [component]           action=<active keys>  (alternatives separated by \t, none = unbound)
+#   [services][app.desktop] action=<active keys>
+# Regenerate from your live config: python3 ~/.local/share/chezmoi/.bin/kde-capture
+
+[KDE Keyboard Layout Switcher]
+Switch to Next Keyboard Layout=Alt+Shift
+
+[com.anthropic.Claude]
+ACC65812014EC2673F05D5D1DAF1CA10-Ctrl+Alt+Space=none
+
+[juk]
+back=none
+forward=none
+forwardAlbum=none
+mute=none
+playPause=none
+stop=none
+
+[khotkeys]
+{001c259d-46e3-4777-9670-1f09474ead6c}=Ctrl+Alt+F
+{05e0c4c6-bc8c-4bd3-b364-848b8c283b71}=Ctrl+Alt+S
+{10de7d96-63a9-4746-b323-4bf106497412}=Ctrl+Alt+B
+{18656125-a9f8-4251-b560-9ee1bd385fcb}=Meta+F3
+{1992a8c1-24c9-4364-a51e-7af45c9f1566}=Meta+F5
+{20c24088-6460-4b65-a547-db15f8010452}=Meta+F2
+{22cba017-e700-4c10-9cf5-afb45bfcb56c}=Alt+Up
+{27bfde7f-1f88-4527-8738-1ae22c0a3911}=Ctrl+Alt+V
+{3554d826-39e1-423e-b736-7089605ff3a8}=Meta+X
+{3a6140e2-3567-4350-94e3-03df8d02b545}=Meta+F1
+{44173454-431b-47c1-858e-932f8e9eff7c}=Meta+Shift+Return
+{4941e5ca-b4f3-4b1b-b566-33d3fc94e4ad}=Alt+F
+{548fecdb-c1e0-4d97-8102-3314df40cd2d}=Ctrl+Alt+PgDown
+{60862ebd-a33e-4704-8798-160093eb0c56}=Ctrl+Alt+M
+{6974e3f8-bde2-43ae-b7d7-1c22e54bcc23}=Ctrl+Shift+Esc
+{6bf4a8a3-df17-4e9e-9f91-871f1c032a52}=Meta+F7
+{70f72937-91cb-4591-9694-973958efe5b8}=Ctrl+Alt+P
+{73454729-badf-44f5-8023-f52761c4d117}=Meta+Esc
+{7451628c-be2a-4635-b046-6d0a85f6419b}=Meta+F6
+{797fe08f-5d4c-4e50-8273-cb935c130818}=Alt+F5
+{8897d7a2-0583-4720-a2b9-05363688ba4e}=Ctrl+Alt+G
+{8abf8ce5-e4fc-428b-b11c-5bd03fb1089b}=Ctrl+Alt+Return
+{9a618ca9-3b05-4c25-8f13-019c04190597}=Ctrl+Alt+W
+{b532ba71-4e40-452d-9346-403342ff23c5}=Ctrl+Alt+PgUp
+{c44fd5df-69c4-4877-8cf2-2b2b9e6d5226}=Alt+P
+{c9ab3ae7-adc3-4212-b2c0-9903c21f8cf7}=Ctrl+Alt+E
+{c9e2644b-c28c-478b-8cac-6d08fa7e117e}=Meta+C
+{cbc24563-660e-4343-923a-7534a3f949de}=Meta+F10
+{cec7c2e1-7c86-4b9e-888c-f74eae3dd159}=Meta+F4
+{d1124577-20bb-4881-8687-623daaaee34d}=Alt+T
+{da62b0eb-7321-4ade-ba2b-85d1eed4813b}=Meta+H
+{ef7cacf3-77ad-4e5a-b20e-b76e9a8bec7e}=Alt+N
+{fbca5ae9-fc95-4918-9e99-a28339775ac2}=Meta+F9
+{fdaa9310-506c-409e-82de-bf2c559177b1}=Meta+F8
+
+[kmix]
+mic_mute=Microphone Mute
+
+[ksmserver]
+Halt Without Confirmation=Ctrl+Alt+Shift+PgDown
+Lock Session=Screensaver\tCtrl+Alt+L\tMeta+L
+Log Out Without Confirmation=Ctrl+Alt+Shift+Del
+Reboot Without Confirmation=Ctrl+Alt+Shift+PgUp
+
+[kwin]
+Activate Window Demanding Attention=Ctrl+Alt+A
+Expose=Ctrl+F9
+ExposeAll=Launch (C)\tCtrl+F10
+ExposeClass=Ctrl+F7
+Grid View=none
+Kill Window=Ctrl+Alt+Esc
+KrohnkiteFloatAll=Meta+Shift+F
+KrohnkiteFocusDown=Meta+J
+KrohnkiteFocusUp=Meta+K
+KrohnkiteGrowHeight=Meta+Ctrl+J
+KrohnkiteIncrease=Meta+I
+KrohnkiteNextLayout=Meta+\\\\
+KrohnkitePreviousLayout=Meta+|
+KrohnkiteShiftDown=Meta+Shift+J
+KrohnkiteShiftLeft=Meta+Shift+H
+KrohnkiteShiftRight=Meta+Shift+L
+KrohnkiteShiftUp=Meta+Shift+K
+KrohnkiteShrinkHeight=Meta+Ctrl+K
+KrohnkiteShrinkWidth=Meta+Ctrl+H
+KrohnkitegrowWidth=Meta+Ctrl+L
+MoveMouseToCenter=none
+MoveMouseToFocus=none
+Overview=Meta+V
+Show Desktop=none
+Switch One Desktop Down=Ctrl+Alt+Down
+Switch One Desktop Up=Ctrl+Alt+Up
+Switch One Desktop to the Left=Ctrl+Alt+Left
+Switch One Desktop to the Right=Ctrl+Alt+Right
+Switch to Desktop 1=Meta+1
+Switch to Desktop 10=Meta+0
+Switch to Desktop 2=Meta+2
+Switch to Desktop 3=Meta+3
+Switch to Desktop 4=Meta+4
+Switch to Desktop 5=Meta+5
+Switch to Desktop 6=Meta+6
+Switch to Desktop 7=Meta+7
+Switch to Desktop 8=Meta+8
+Switch to Desktop 9=Meta+9
+Switch to Next Desktop=Meta+PgDown
+Switch to Previous Desktop=Meta+PgUp
+Walk Through Windows=Alt+Tab
+Walk Through Windows (Reverse)=Alt+Shift+Backtab
+Walk Through Windows of Current Application=Alt+`
+Walk Through Windows of Current Application (Reverse)=Alt+~
+Window Close=Alt+F4\tMeta+W
+Window Fullscreen=Meta+F
+Window Maximize=Meta+N
+Window Minimize=Meta+M
+Window One Desktop Down=none
+Window One Desktop Up=none
+Window One Desktop to the Left=none
+Window One Desktop to the Right=none
+Window to Next Screen=none
+Window to Previous Screen=none
+view_actual_size=none
+view_zoom_in=Meta+=
+
+[lattedock]
+activate entry 1=none
+activate entry 10=none
+activate entry 11=none
+activate entry 12=none
+activate entry 13=none
+activate entry 14=none
+activate entry 16=none
+activate entry 17=none
+activate entry 19=none
+activate entry 2=none
+activate entry 3=none
+activate entry 4=none
+activate entry 5=none
+activate entry 6=none
+activate entry 7=none
+activate entry 8=none
+activate entry 9=none
+clipboard_action=none
+repeat_action=none
+show latte global settings=none
+show-on-mouse-pos=none
+
+[org_kde_powerdevil]
+powerProfile=Battery
+
+[plasmashell]
+activate application launcher=Meta
+activate task manager entry 1=none
+activate task manager entry 2=none
+activate task manager entry 3=none
+activate task manager entry 4=none
+activate task manager entry 5=none
+activate task manager entry 6=none
+activate task manager entry 7=none
+activate task manager entry 8=none
+activate task manager entry 9=none
+activate widget 38=Alt+F1
+clipboard_action=Ctrl+Alt+X
+previous activity=Meta+Shift+A
+repeat_action=Ctrl+Alt+R
+show dashboard=Meta+Z
+show-on-mouse-pos=none
+
+[services][org.flameshot.Flameshot.desktop]
+Capture=Print
+
+[services][org.kde.konsole.desktop]
+_launch=Ctrl+Alt+T\tMeta+Return
+
+[services][org.kde.krunner.desktop]
+_launch=Search\tAlt+Space\tAlt+F2\tMeta+Space\tMeta+D
+
+[services][org.kde.plasma-systemmonitor.desktop]
+_launch=none
+
+[services][org.kde.spectacle.desktop]
+CurrentMonitorScreenShot=none
+FullScreenScreenShot=none
+OpenWithoutScreenshot=none
+RecordRegion=Meta+Shift+R
+RectangularRegionScreenShot=Meta+R
+_launch=Ctrl+Shift+Print
+
+[services][org.kde.touchpadshortcuts.desktop]
+ToggleTouchpad=Touchpad Toggle
+
+[services][systemsettings.desktop]
+_launch=\tTools
+
+[wacomtablet]
+Map to screen 1=none
+Map to screen 2=none
+Next Profile=none
+Toggle screen map selection=none
+
+[yakuake]
+toggle-window-state=Ctrl+F12

@@ -1,0 +1,8 @@
+# Your keyboard layouts. Only these keys are enforced on ~/.config/kxkbrc.
+# Regenerate from your live config: python3 ~/.local/share/chezmoi/.bin/kde-capture
+
+[Layout]
+DisplayNames=,
+LayoutList=us,ara
+Use=true
+VariantList=,

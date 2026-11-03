@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+# Enforce only your keyboard layouts on ~/.config/kxkbrc and keep every other
+# key KDE writes there.
+#   Your layouts: .chezmoitemplates/kde/kxkbrc.overrides
+#   Update them from the live file: python3 ~/.local/share/chezmoi/.bin/kde-capture
+{{ include ".chezmoitemplates/kde/kini.py" }}
+
+OVERRIDES = r"""
+{{ include ".chezmoitemplates/kde/kxkbrc.overrides" }}
+"""
+
+main(OVERRIDES, shortcuts=False)

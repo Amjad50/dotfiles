@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+"""kde-capture: the `chezmoi re-add` for your KDE shortcuts and keyboard layouts.
+
+~/.config/kglobalshortcutsrc and ~/.config/kxkbrc are managed by modify_ scripts
+that enforce only what's listed in .chezmoitemplates/kde/*.overrides, so KDE's own
+churn (new activity UUIDs, reordered keys, ",," vs ",none,") never shows up in git.
+After you change a shortcut or layout in System Settings, run this to rewrite the
+overrides from your live config, then review with `git diff`:
+
+  python3 ~/.local/share/chezmoi/.bin/kde-capture            # rewrite overrides
+  python3 ~/.local/share/chezmoi/.bin/kde-capture --check    # only show what would change
+
+What gets captured:
+  kglobalshortcutsrc  every action whose active keys differ from KDE's default,
+                      plus every [services][...] entry (KDE writes those only
+                      when you changed them)
+  kxkbrc              the [Layout] keys that define your layouts and switching
+
+This file starts with a dot, so chezmoi never deploys it.
+"""
+import difflib
+import importlib.util
+import os
+import sys
+from pathlib import Path
+
+SOURCE = Path(__file__).resolve().parent.parent
+KDE_DIR = SOURCE / ".chezmoitemplates" / "kde"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+LAYOUT_KEYS = ("Use", "LayoutList", "VariantList", "DisplayNames", "LayoutLoopCount",
+               "SwitchMode", "Options", "ResetOldOptions")
+
+sys.dont_write_bytecode = True  # no __pycache__ in the chezmoi source
+spec = importlib.util.spec_from_file_location("kini", KDE_DIR / "kini.py")
+kini = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(kini)
+
+
+def groups(text):
+    """Yield (group, [(key, value), ...]) in file order."""
+    cur, items = None, []
+    for line in text.splitlines():
+        if line.startswith("["):
+            if cur is not None:
+                yield cur, items
+            cur, items = line.rstrip(), []
+        elif cur is not None and "=" in line and not line.lstrip().startswith("#"):
+            key, _, value = line.partition("=")
+            items.append((key, value))
+    if cur is not None:
+        yield cur, items
+
+
+def capture_shortcuts(text):
+    out = []
+    for group, items in groups(text):
+        picked = []
+        for key, value in items:
+            if key == "_k_friendly_name":
+                continue
+            if kini.is_service(group):
+                picked.append((key, value))
+                continue
+            fields = kini.raw_fields(value)
+            if len(fields) == 3 and kini.keyset(fields[0]) != kini.keyset(fields[1]):
+                picked.append((key, fields[0]))
+        if picked:
+            out.append(group)
+            out.extend(f"{k}={v}" for k, v in picked)
+            out.append("")
+    return out
+
+
+def capture_layouts(text):
+    out = []
+    for group, items in groups(text):
+        if group != "[Layout]":
+            continue
+        picked = [(k, v) for k, v in items if k in LAYOUT_KEYS]
+        if picked:
+            out.append(group)
+            out.extend(f"{k}={v}" for k, v in picked)
+            out.append("")
+    return out
+
+
+HEADERS = {
+    "kglobalshortcutsrc": [
+        "# Your KDE global shortcuts. Only these are enforced on ~/.config/kglobalshortcutsrc;",
+        "# everything else in that file is left as KDE writes it.",
+        "#   [component]           action=<active keys>  (alternatives separated by \\t, none = unbound)",
+        "#   [services][app.desktop] action=<active keys>",
+        "# Regenerate from your live config: python3 ~/.local/share/chezmoi/.bin/kde-capture",
+        "",
+    ],
+    "kxkbrc": [
+        "# Your keyboard layouts. Only these keys are enforced on ~/.config/kxkbrc.",
+        "# Regenerate from your live config: python3 ~/.local/share/chezmoi/.bin/kde-capture",
+        "",
+    ],
+}
+
+
+def main():
+    check = "--check" in sys.argv[1:]
+    changed = False
+    for name, capture in (("kglobalshortcutsrc", capture_shortcuts), ("kxkbrc", capture_layouts)):
+        live = CONFIG / name
+        target = KDE_DIR / f"{name}.overrides"
+        if not live.exists():
+            print(f"skip {name}: {live} not found")
+            continue
+        new = "\n".join(HEADERS[name] + capture(live.read_text())).rstrip("\n") + "\n"
+        old = target.read_text() if target.exists() else ""
+        if new == old:
+            print(f"{name}: up to date")
+            continue
+        changed = True
+        sys.stdout.writelines(difflib.unified_diff(
+            old.splitlines(True), new.splitlines(True),
+            f"a/{target.relative_to(SOURCE)}", f"b/{target.relative_to(SOURCE)}"))
+        if not check:
+            target.write_text(new)
+            print(f"{name}: overrides updated")
+    return 1 if (check and changed) else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
