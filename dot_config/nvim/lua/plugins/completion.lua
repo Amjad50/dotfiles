@@ -8,19 +8,6 @@ return {
         preset = "super-tab",
         ["<Tab>"] = {
           function(cmp)
-            local duet_ok, duet = pcall(require, "minuet.duet")
-            if duet_ok and duet.action.is_visible() then
-              cmp.hide()
-              vim.schedule(require("core.minuet_duet_auto").apply)
-              return true
-            end
-
-            local ok, virtualtext = pcall(require, "minuet.virtualtext")
-            if ok and virtualtext.action.is_visible() then
-              virtualtext.action.accept()
-              return true
-            end
-
             if cmp.snippet_active() then
               return cmp.accept()
             end
@@ -29,9 +16,6 @@ return {
           end,
           "snippet_forward",
           "fallback",
-        },
-        ["<A-y>"] = {
-          function(cmp) cmp.show({ providers = { "minuet" } }) end,
         },
         ["<CR>"] = {
           function(cmp)
@@ -54,16 +38,7 @@ return {
       },
       signature = { enabled = true, window = { border = "rounded" } },
       sources = {
-        default = { "lsp", "path", "buffer", "minuet" },
-        providers = {
-          minuet = {
-            name = "Minuet",
-            module = "minuet.blink",
-            async = true,
-            timeout_ms = 2500,
-            score_offset = 50,
-          },
-        },
+        default = { "lsp", "path", "buffer" },
       },
       fuzzy = { implementation = "prefer_rust_with_warning" },
     },
