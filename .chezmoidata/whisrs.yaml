@@ -1,0 +1,8 @@
+# whisrs (voice dictation) release installed by run_onchange_after_setup-whisrs.sh.tmpl.
+# To upgrade: bump `version`, download the new tarball from
+# https://github.com/y0sif/whisrs/releases and put its `sha256sum` here.
+# Upstream publishes no checksums, so this pin is what guards the download.
+whisrs:
+  version: v0.2.0
+  sha256:
+    x86_64: 819c66f570fb12af16915ff928a61bbc06bf136b42b9fcfcddebe7f3fb3f6f03

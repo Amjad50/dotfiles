@@ -1,0 +1,18 @@
+[Unit]
+Description=whisrs dictation daemon
+Documentation=https://github.com/y0sif/whisrs
+# Needs the session's Wayland/X11 environment for typing, the tray and the overlay.
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/whisrsd
+# WHISRS_GROQ_API_KEY=... (local only, never in chezmoi).
+EnvironmentFile=-%h/.config/whisrs/secrets.env
+Restart=on-failure
+RestartSec=3
+PassEnvironment=WAYLAND_DISPLAY DISPLAY XAUTHORITY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_RUNTIME_DIR HYPRLAND_INSTANCE_SIGNATURE NIRI_SOCKET SWAYSOCK
+
+[Install]
+WantedBy=graphical-session.target

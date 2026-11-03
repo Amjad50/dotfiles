@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Dictate (keyboard language)
+Comment=Start or stop whisrs dictation in the language of the active keyboard layout
+Exec={{ .chezmoi.homeDir }}/.local/bin/whisrs-kbd --notify
+Icon=audio-input-microphone
+NoDisplay=true
+StartupNotify=false
+# Same shape as a KDE "Command or Script" shortcut, so it shows (and can be
+# rebound) under System Settings > Shortcuts > Commands. X-KDE-Shortcuts is the
+# default key; KDE picks it up without touching kglobalshortcutsrc.
+X-KDE-GlobalAccel-CommandShortcut=true
+X-KDE-Shortcuts=F9

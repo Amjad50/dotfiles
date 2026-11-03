@@ -1,0 +1,113 @@
+{{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
+{{ if and (eq .chezmoi.os "linux") (has "personal" $tags) -}}
+#!/usr/bin/env bash
+# whisrs voice dictation: install the pinned release, wire up the user service
+# and the local Groq key file, and retire hyprwhspr (it grabbed F9).
+# Runs again whenever one of these changes, so edits take effect on apply:
+#   version {{ .whisrs.version }}
+#   unit    {{ include "dot_config/systemd/user/whisrs.service" | sha256sum }}
+#   config  {{ include "dot_config/whisrs/private_config.toml" | sha256sum }}
+set -euo pipefail
+
+version="{{ .whisrs.version }}"
+bin_dir="$HOME/.local/bin"
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/whisrs"
+secrets="$config_dir/secrets.env"
+has_tty() { { : </dev/tty; } 2>/dev/null; }
+
+# ── 1. Binaries: prebuilt release, checksum pinned in .chezmoidata/whisrs.yaml ──
+installed="$("$bin_dir/whisrs" --version 2>/dev/null | tail -n1 || true)"
+if [[ "$installed" != "${version#v}" ]]; then
+    arch="$(uname -m)"
+    case "$arch" in
+{{- range $arch, $sum := .whisrs.sha256 }}
+        {{ $arch }}) sha256="{{ $sum }}" ;;
+{{- end }}
+        *) echo "whisrs: no pinned checksum for $arch in .chezmoidata/whisrs.yaml" >&2; exit 1 ;;
+    esac
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    echo "→ Downloading whisrs $version ($arch)"
+    curl -fsSL -o "$tmp/whisrs.tar.gz" \
+        "https://github.com/y0sif/whisrs/releases/download/$version/whisrs-linux-$arch.tar.gz"
+    echo "$sha256  $tmp/whisrs.tar.gz" | sha256sum --check --quiet -
+    tar -xzf "$tmp/whisrs.tar.gz" -C "$tmp"
+    mkdir -p "$bin_dir"
+    for exe in whisrs whisrsd; do
+        # Rename into place: works while the old daemon is still running.
+        install -m755 "$tmp/$exe" "$bin_dir/.$exe.new"
+        mv -f "$bin_dir/.$exe.new" "$bin_dir/$exe"
+    done
+    install -Dm644 -t "$HOME/.local/share/man/man1" "$tmp/contrib/whisrs.1" "$tmp/contrib/whisrsd.1"
+    echo "✓ whisrs $version installed in $bin_dir"
+fi
+
+# ── 2. Typing goes through /dev/uinput ──────────────────────────────────────────
+if [[ ! -w /dev/uinput ]]; then
+    echo "⚠ whisrs types through /dev/uinput, which you can't write to yet."
+    if has_tty; then
+        echo "  Installing the udev rule from whisrs (asks for sudo)…"
+        sudo tee /etc/udev/rules.d/99-whisrs.rules >/dev/null <<'RULE'
+KERNEL=="uinput", SUBSYSTEM=="misc", MODE="0660", GROUP="input", TAG+="uaccess", OPTIONS+="static_node=uinput"
+KERNEL=="uinput", SUBSYSTEM=="misc", TEST=="/usr/bin/setfacl", RUN+="/usr/bin/setfacl -m g:input:rw /dev/$name"
+RULE
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --subsystem-match=misc --sysname-match=uinput
+        if ! id -nG | grep -qw input; then
+            sudo usermod -aG input "$USER"
+            echo "  Added you to the input group: log out and back in once."
+        fi
+    else
+        echo "  Run chezmoi apply from a terminal to fix it (needs sudo)."
+    fi
+fi
+
+# ── 3. The Groq key: local file, never in chezmoi ───────────────────────────────
+mkdir -p "$config_dir"
+if [[ ! -f "$secrets" ]]; then
+    key=""
+    # Reuse the key hyprwhspr already stored on this machine, if there is one.
+    old="${XDG_DATA_HOME:-$HOME/.local/share}/hyprwhspr/credentials"
+    if [[ -r "$old" ]] && command -v python3 >/dev/null; then
+        key="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("groq",""))' "$old" 2>/dev/null || true)"
+        [[ "$key" == gsk_* ]] || key=""
+    fi
+    (
+        umask 077
+        printf '# Groq API key for whisrs (https://console.groq.com/keys).\n# Local to this machine: chezmoi never tracks this file.\nWHISRS_GROQ_API_KEY=%s\n' "$key" >"$secrets"
+    )
+    if [[ -n "$key" ]]; then
+        echo "✓ Copied your Groq key from hyprwhspr into $secrets"
+    fi
+fi
+chmod 600 "$secrets"
+have_key=false
+grep -Eq '^WHISRS_GROQ_API_KEY=[^[:space:]]+' "$secrets" && have_key=true
+
+# ── 4. Services ─────────────────────────────────────────────────────────────────
+if ! systemctl --user show-environment >/dev/null 2>&1; then
+    echo "whisrs: no systemd user session here; skipping service setup."
+    exit 0
+fi
+
+if systemctl --user is-enabled --quiet hyprwhspr.service 2>/dev/null \
+    || systemctl --user is-active --quiet hyprwhspr.service 2>/dev/null; then
+    systemctl --user disable --now hyprwhspr.service
+    echo "✓ Stopped and disabled hyprwhspr (whisrs takes over F9). Uninstall it whenever you like."
+fi
+
+systemctl --user daemon-reload
+systemctl --user enable whisrs.service
+if $have_key; then
+    systemctl --user restart whisrs.service
+    echo "✓ whisrs is running: press F9 to dictate in your keyboard layout's language."
+else
+    echo "→ Last step: put your Groq key in $secrets"
+    echo "  then run: systemctl --user restart whisrs"
+fi
+
+# Let KDE notice the F9 shortcut in net.local.whisrs-kbd.desktop right away.
+if command -v kbuildsycoca6 >/dev/null; then
+    kbuildsycoca6 >/dev/null 2>&1 || true
+fi
+{{ end -}}

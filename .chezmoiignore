@@ -15,10 +15,16 @@ docs
 .config/konsolerc
 {{- end }}
 
-{{- /* Speech-to-text preferences belong only on personal Linux desktops. */}}
+{{- /* Speech-to-text (whisrs) belongs only on personal Linux desktops. */}}
 {{- if not (and (eq .chezmoi.os "linux") (has "personal" $tags)) }}
-.config/hyprwhspr
+.config/whisrs
+.config/systemd/user/whisrs.service
+.local/bin/whisrs-kbd
+.local/share/applications/net.local.whisrs-kbd.desktop
 {{- end }}
+
+{{- /* The Groq key stays on each machine: keep `chezmoi add` away from it. */}}
+.config/whisrs/secrets.env
 
 {{- /* age (the binary, for SSH-key identities) must exist too, else chezmoi's
        built-in age can't decrypt and aborts apply before packages install. */}}

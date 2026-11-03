@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+"""whisrs-kbd: start/stop whisrs dictation in the language of your active keyboard layout.
+
+Bind this to your dictation key instead of `whisrs toggle`. On each press it asks
+the desktop which keyboard layout is active (KDE Plasma via D-Bus, with IBus as a
+fallback), maps it to a language code and runs `whisrs toggle -l <code>`.
+Switch your keyboard to Arabic -> you dictate Arabic. Switch to US -> English.
+
+Usage:
+  whisrs-kbd             toggle dictation in the active layout's language
+  whisrs-kbd --notify    same, and flash a short notification naming the language
+  whisrs-kbd --print     only print what it detected (for testing), don't toggle
+"""
+
+import json
+import shutil
+import subprocess
+import sys
+
+# XKB layout code -> Whisper language code. Add or change entries freely.
+# A layout missing from this table falls back to whisrs's configured language.
+LAYOUT_TO_LANG = {
+    # English
+    "us": "en", "gb": "en", "au": "en", "ie": "en", "nz": "en", "za": "en",
+    # Arabic
+    "ara": "ar", "eg": "ar", "iq": "ar", "sy": "ar", "ma": "ar", "jo": "ar",
+    # Others
+    "de": "de", "at": "de", "ch": "de", "fr": "fr", "ca": "fr", "es": "es",
+    "latam": "es", "it": "it", "pt": "pt", "br": "pt", "nl": "nl", "ru": "ru",
+    "ua": "uk", "by": "be", "pl": "pl", "cz": "cs", "sk": "sk", "hu": "hu",
+    "ro": "ro", "bg": "bg", "rs": "sr", "hr": "hr", "si": "sl", "gr": "el",
+    "tr": "tr", "ir": "fa", "il": "he", "pk": "ur", "in": "hi", "bd": "bn",
+    "jp": "ja", "kr": "ko", "cn": "zh", "tw": "zh", "vn": "vi", "th": "th",
+    "se": "sv", "no": "no", "dk": "da", "fi": "fi", "ee": "et", "lv": "lv",
+    "lt": "lt", "ge": "ka", "am": "hy", "az": "az", "kz": "kk", "id": "id",
+}
+
+
+def run(cmd):
+    """Run a command, return stdout or None if it is missing or fails."""
+    if not shutil.which(cmd[0]):
+        return None
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return out.stdout.strip() if out.returncode == 0 else None
+
+
+def kde_layout():
+    """(layout_code, display_name, layout_count) from KWin, or None."""
+    base = ["busctl", "--user", "--json=short", "call",
+            "org.kde.keyboard", "/Layouts", "org.kde.KeyboardLayouts"]
+    idx_out = run(base + ["getLayout"])
+    list_out = run(base + ["getLayoutsList"])
+    if not idx_out or not list_out:
+        return None
+    try:
+        idx = json.loads(idx_out)["data"][0]
+        layouts = json.loads(list_out)["data"][0]  # [[short, display, long], ...]
+        short, *names = layouts[idx]
+    except (ValueError, KeyError, IndexError, TypeError):
+        return None
+    long_name = names[-1] if names and names[-1] else short
+    return short, long_name, len(layouts)
+
+
+def ibus_layout():
+    """(layout_code, engine_name) from IBus, or None. Engines look like xkb:ara::ara."""
+    engine = run(["ibus", "engine"])
+    if not engine:
+        return None
+    parts = engine.split(":")
+    if parts[0] == "xkb" and len(parts) > 1:
+        return parts[1], engine
+    return None
+
+
+def detect():
+    """Return (layout_code, label) for the active layout, or (None, None)."""
+    kde = kde_layout()
+    if kde and kde[2] > 1:
+        return kde[0], kde[1]
+    # One KDE layout (or no KDE): the switching may happen in IBus instead.
+    ib = ibus_layout()
+    if ib:
+        return ib
+    if kde:
+        return kde[0], kde[1]
+    return None, None
+
+
+def whisrs_idle():
+    return run(["whisrs", "status"]) == "idle"
+
+
+def notify(text):
+    base = ["notify-send", "-a", "whisrs", "-t", "1500",
+            "-h", "string:x-canonical-private-synchronous:whisrs-lang"]
+    if run(base + ["--transient", text]) is None:
+        run(base + [text])  # older notify-send without --transient
+
+
+def main():
+    args = set(sys.argv[1:])
+    layout, label = detect()
+    lang = LAYOUT_TO_LANG.get(layout or "")
+
+    if "--print" in args:
+        print(f"layout: {layout or '?'} ({label or 'not detected'})")
+        print(f"language: {lang or 'not mapped, whisrs default will be used'}")
+        return 0
+
+    starting = "--notify" in args and whisrs_idle()
+
+    cmd = ["whisrs", "toggle"] + (["-l", lang] if lang else [])
+    code = subprocess.run(cmd).returncode
+
+    if starting and code == 0:
+        notify(f"🎙 {label or 'default language'}")
+    return code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

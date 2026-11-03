@@ -1,0 +1,31 @@
+# whisrs voice dictation, managed by chezmoi (dot_config/whisrs/private_config.toml).
+#
+# The Groq API key is NOT in this file. It lives in ~/.config/whisrs/secrets.env
+# as WHISRS_GROQ_API_KEY=..., which the systemd unit loads and chezmoi never
+# tracks. Leave [groq] api_key unset here.
+#
+# Changes made with `whisrs config` land in this file: bring them back into
+# chezmoi with `chezmoi re-add ~/.config/whisrs/config.toml`.
+# Full reference: https://github.com/y0sif/whisrs/blob/main/docs/configuration.md
+
+[general]
+backend = "groq"
+# Only a fallback. F9 runs whisrs-kbd, which passes the language of the active
+# keyboard layout on every press (us -> en, ara -> ar).
+language = "auto"
+notify = true
+history = true                # `whisrs log` shows past dictations
+remove_filler_words = true
+audio_feedback = true
+tray = true
+overlay = true                # waveform pill while recording
+
+[groq]
+model = "whisper-large-v3-turbo"
+
+[overlay]
+theme = "carbon"              # carbon | ember | cyan | custom
+position = "bottom-center"
+
+[hooks]
+media_auto_pause = true       # pause playing media while dictating, resume after
