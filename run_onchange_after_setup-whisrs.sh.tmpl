@@ -108,6 +108,6 @@ fi
 
 # Let KDE notice the F9 shortcut in net.local.whisrs-kbd.desktop right away.
 if command -v kbuildsycoca6 >/dev/null; then
-    kbuildsycoca6 >/dev/null 2>&1 || true
+    systemd-run --user --wait --collect --quiet kbuildsycoca6 >/dev/null 2>&1 || true
 fi
 {{ end -}}
