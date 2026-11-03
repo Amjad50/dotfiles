@@ -8,6 +8,13 @@ return {
         preset = "super-tab",
         ["<Tab>"] = {
           function(cmp)
+            local duet_ok, duet = pcall(require, "minuet.duet")
+            if duet_ok and duet.action.is_visible() then
+              cmp.hide()
+              vim.schedule(require("core.minuet_duet_auto").apply)
+              return true
+            end
+
             local ok, virtualtext = pcall(require, "minuet.virtualtext")
             if ok and virtualtext.action.is_visible() then
               virtualtext.action.accept()

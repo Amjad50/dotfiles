@@ -85,6 +85,7 @@ return {
             local git           = statusline.section_git({ trunc_width = 75 })
             local diff          = statusline.section_diff({ trunc_width = 75 })
             local diagnostics   = statusline.section_diagnostics({ trunc_width = 75 })
+            local minuet, minuet_hl = require("core.minuet_status").section()
             local lsp           = ""
             if vim.api.nvim_win_get_width(0) > 75 then
               local clients = vim.lsp.get_clients({ bufnr = 0 })
@@ -99,7 +100,9 @@ return {
             local location      = "%2l:%-2v"
             return statusline.combine_groups({
               { hl = mode_hl,                  strings = { mode } },
-              { hl = "MiniStatuslineDevinfo",  strings = { git, diff, diagnostics, lsp } },
+              { hl = "MiniStatuslineDevinfo",  strings = { git, diff, diagnostics } },
+              { hl = minuet_hl,                 strings = { minuet } },
+              { hl = "MiniStatuslineDevinfo",  strings = { lsp } },
               "%<",
               { hl = "MiniStatuslineFilename", strings = { filename } },
               "%=",

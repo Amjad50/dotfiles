@@ -31,9 +31,91 @@ return {
         end,
         desc = "Minuet: select completion preset",
       },
+      {
+        "<leader>dp",
+        function() require("core.minuet_duet_auto").predict(true) end,
+        mode = { "n", "i" },
+        desc = "Minuet Duet: predict next edit",
+      },
+      {
+        "<A-d>",
+        function() require("core.minuet_duet_auto").predict(true) end,
+        mode = { "n", "i" },
+        desc = "Minuet Duet: predict next edit now",
+      },
+      {
+        "<leader>da",
+        function() require("core.minuet_duet_auto").apply() end,
+        mode = { "n", "i" },
+        desc = "Minuet Duet: apply predicted edit",
+      },
+      {
+        "<leader>dd",
+        function() require("minuet.duet").action.dismiss() end,
+        mode = { "n", "i" },
+        desc = "Minuet Duet: dismiss predicted edit",
+      },
+      {
+        "<leader>dt",
+        function() require("core.minuet_duet_auto").toggle() end,
+        mode = { "n", "i" },
+        desc = "Minuet Duet: toggle automatic predictions",
+      },
+      {
+        "<Tab>",
+        function()
+          local duet = require("minuet.duet")
+          if duet.action.is_visible() then
+            vim.schedule(require("core.minuet_duet_auto").apply)
+            return
+          end
+
+          vim.api.nvim_feedkeys(vim.keycode("<C-i>"), "n", false)
+        end,
+        mode = "n",
+        desc = "Minuet Duet: apply prediction or jump forward",
+      },
     },
     config = function()
       local mc = require("minuet.config")
+      local duet_defaults = require("minuet.duet.config")
+      local diagnostic_context = require("core.minuet_diagnostics")
+      local default_duet_guidelines =
+        duet_defaults.provider_options.openai_compatible.system.guidelines
+
+      local function completion_fim_template()
+        return {
+          prompt = function(context_before_cursor, context_after_cursor, opts)
+            local diagnostics = diagnostic_context.render_commented()
+            local prompt = mc.default_fim_template.prompt(context_before_cursor, context_after_cursor, opts)
+            return diagnostics == "" and prompt or diagnostics .. "\n" .. prompt
+          end,
+          suffix = mc.default_fim_template.suffix,
+        }
+      end
+
+      local function completion_chat_input(suffix_first)
+        local chat_input = vim.deepcopy(
+          suffix_first and mc.default_chat_input or mc.default_chat_input_prefix_first
+        )
+        chat_input.template = "{{{diagnostics}}}\n" .. chat_input.template
+        chat_input.diagnostics = function() return diagnostic_context.render() end
+        return chat_input
+      end
+
+      local duet_chat_input = vim.deepcopy(
+        duet_defaults.provider_options.openai_compatible.chat_input
+      )
+      local duet_template = duet_chat_input.template
+      duet_chat_input.template = function()
+        return "{{{diagnostics}}}\n" .. duet_template()
+      end
+      duet_chat_input.diagnostics = function(context)
+        local before_cursor = context.editable_region_before_cursor or ""
+        local _, newline_count = before_cursor:gsub("\n", "")
+        local row = (context.range and context.range.start_row or 0) + newline_count
+        return diagnostic_context.render(context.bufnr, row)
+      end
 
       local function deepseek_fim_preset(options)
         return vim.tbl_deep_extend("force", {
@@ -51,6 +133,7 @@ return {
               model = "deepseek-v4-flash",
               name = "Deepseek",
               stream = true,
+              template = completion_fim_template(),
               optional = {
                 max_tokens = 96,
                 temperature = 0,
@@ -78,7 +161,7 @@ return {
               stream = true,
               system = suffix_first and mc.default_system or mc.default_system_prefix_first,
               few_shots = suffix_first and mc.default_few_shots or mc.default_few_shots_prefix_first,
-              chat_input = suffix_first and mc.default_chat_input or mc.default_chat_input_prefix_first,
+              chat_input = completion_chat_input(suffix_first),
               optional = {
                 max_tokens = 96,
                 temperature = 0,
@@ -99,10 +182,54 @@ return {
         context_window = 10000,
         context_ratio = 0.75,
         n_completions = 1,
-        notify = "warn",
+        notify = "error",
         enable_predicates = { can_complete },
+        duet = {
+          provider = "openai_compatible",
+          request_timeout = 15,
+          editable_region = {
+            lines_before = 6,
+            lines_after = 10,
+            before_region_filter_length = 30,
+            after_region_filter_length = 30,
+          },
+          non_editable_region = {
+            context_window = 12000,
+            context_ratio = 0.75,
+          },
+          preview = {
+            cursor = "▌",
+          },
+          provider_options = {
+            openai_compatible = {
+              api_key = "DEEPSEEK_API_KEY",
+              end_point = "https://api.deepseek.com/chat/completions",
+              model = "deepseek-v4-flash",
+              name = "Deepseek",
+              chat_input = duet_chat_input,
+              system = {
+                guidelines = function()
+                  return default_duet_guidelines()
+                    .. [[
+
+8. Use nearby diagnostics to guide a fix when they are relevant to the editable region. Do not change unrelated code merely because a diagnostic is listed.
+9. If the code is already coherent and no next edit is needed,
+   preserve the editable region verbatim and only retain the cursor marker.
+10. Always finish the response with exactly one closing editable-region marker. Never stop before emitting it.]]
+                end,
+              },
+              optional = {
+                max_tokens = 4096,
+                temperature = 0,
+                thinking = { type = "disabled" },
+              },
+            },
+          },
+        },
         blink = {
-          enable_auto_complete = true,
+          -- Keep the source available through <A-y>, but avoid racing an
+          -- automatic Duet request with a second automatic AI request.
+          enable_auto_complete = false,
         },
         lsp = {
           enabled_ft = {},
@@ -110,8 +237,8 @@ return {
           inline_completion = { enable = false },
         },
         virtualtext = {
-          -- Blink owns automatic AI completion; virtual text remains available
-          -- for manual requests without sending duplicate automatic requests.
+          -- Duet owns automatic AI prediction; virtual text remains available
+          -- for manual FIM requests without sending duplicate requests.
           auto_trigger_ft = {},
           auto_trigger_ignore_ft = {
             "help",
@@ -169,11 +296,31 @@ return {
             model = "deepseek-v4-flash",
             name = "Deepseek",
             stream = true,
+            template = completion_fim_template(),
             optional = {
               max_tokens = 96,
               temperature = 0,
             },
           },
+        },
+      })
+
+      require("core.minuet_duet_auto").setup({
+        debounce = 450,
+        ignore_filetypes = {
+          "help",
+          "terminal",
+          "prompt",
+          "TelescopePrompt",
+          "snacks_dashboard",
+          "dashboard",
+          "alpha",
+          "lazy",
+          "mason",
+          "neo-tree",
+          "qf",
+          "DiffviewFiles",
+          "bigfile",
         },
       })
     end,

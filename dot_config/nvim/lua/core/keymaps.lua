@@ -1,8 +1,25 @@
 local map = vim.keymap.set
 
+local function dismiss_duet_prediction()
+  local ok, duet = pcall(require, "minuet.duet")
+  if not ok then return false end
+  if duet.action.is_visible() then
+    duet.action.dismiss()
+    return true
+  end
+  return false
+end
+
 map({ "n", "x" }, "<leader>w", "<Cmd>w<CR><Esc>", { desc = "Save file" })
 map("n", "<leader>q", "<Cmd>confirm qa<CR>", { desc = "Quit all" })
-map("n", "<Esc>", "<Cmd>nohlsearch<CR>", { desc = "Clear search" })
+map("i", "<Esc>", function()
+  if dismiss_duet_prediction() then return end
+  vim.cmd("stopinsert")
+end, { desc = "Dismiss Duet prediction or exit insert mode" })
+map("n", "<Esc>", function()
+  if dismiss_duet_prediction() then return end
+  vim.cmd("nohlsearch")
+end, { desc = "Clear search / dismiss Duet prediction" })
 
 map("n", "<C-h>", "<C-w>h", { desc = "Window left" })
 map("n", "<C-j>", "<C-w>j", { desc = "Window down" })
