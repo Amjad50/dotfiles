@@ -6,7 +6,7 @@
 	cm = "commit -sm"
 	d = "diff"
 	ds = "diff --staged"
-	logg = "log --oneline --full-history --all --decorate --graph"
+	logg = "log --oneline --full-history --branches --remotes --decorate --graph"
 	st = "status"
   pushf = "push --force-with-lease"
 
