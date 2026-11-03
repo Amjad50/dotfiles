@@ -17,6 +17,7 @@ notify = true
 history = true                # `whisrs log` shows past dictations
 remove_filler_words = true
 audio_feedback = true
+audio_feedback_volume = 0.1   # 0.0 to 1.0
 tray = true
 overlay = true                # waveform pill while recording
 
@@ -24,8 +25,13 @@ overlay = true                # waveform pill while recording
 model = "whisper-large-v3-turbo"
 
 [overlay]
-theme = "carbon"              # carbon | ember | cyan | custom
 position = "bottom-center"
 
 [hooks]
 media_auto_pause = true       # pause playing media while dictating, resume after
+
+[agent_overlay]
+
+[llm]
+model = "openai/gpt-oss-120b"
+api_url = "https://api.groq.com/openai/v1/chat/completions"
