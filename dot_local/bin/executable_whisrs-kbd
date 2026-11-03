@@ -13,6 +13,7 @@ Usage:
 """
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -102,6 +103,8 @@ def notify(text):
 
 
 def main():
+    # KDE launches this with the session PATH, which may lack ~/.local/bin.
+    os.environ["PATH"] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + os.environ.get("PATH", "")
     args = set(sys.argv[1:])
     layout, label = detect()
     lang = LAYOUT_TO_LANG.get(layout or "")
