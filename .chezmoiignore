@@ -23,6 +23,11 @@ docs
 .local/share/applications/net.local.whisrs-kbd.desktop
 {{- end }}
 
+{{- /* Clean Mic (QCY buds through noise suppression) belongs only on personal Linux desktops. */}}
+{{- if not (and (eq .chezmoi.os "linux") (has "personal" $tags)) }}
+.config/pipewire/filter-chain.conf.d/clean-mic.conf
+{{- end }}
+
 {{- /* The Groq key stays on each machine: keep `chezmoi add` away from it. */}}
 .config/whisrs/secrets.env
 

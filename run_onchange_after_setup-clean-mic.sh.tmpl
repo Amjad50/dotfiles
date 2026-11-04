@@ -1,0 +1,33 @@
+{{- $tags := dig "tags" list (dig "machines" .chezmoi.hostname dict .) -}}
+{{ if and (eq .chezmoi.os "linux") (has "personal" $tags) -}}
+#!/usr/bin/env bash
+# Clean Mic: noise-suppressed QCY buds mic for every app, via PipeWire's filter-chain service.
+# Runs again whenever the config changes:
+#   config {{ include "dot_config/pipewire/filter-chain.conf.d/clean-mic.conf" | sha256sum }}
+set -euo pipefail
+
+if ! systemctl --user show-environment >/dev/null 2>&1; then
+    echo "clean-mic: no systemd user session here; skipping service setup."
+    exit 0
+fi
+
+# 1.6.9 left the buds' mic silent after its first use per connection; 1.6.11 passed.
+min="1.6.11"
+have="$(pipewire --version | awk '/Linked with/ {print $NF}')"
+if [[ "$(printf '%s\n' "$min" "$have" | sort -V | head -n1)" != "$min" ]]; then
+    echo "⚠ PipeWire $have is older than $min: the buds' mic may go silent after one use. Update it."
+fi
+
+systemctl --user enable filter-chain.service
+systemctl --user restart filter-chain.service
+
+for _ in {1..10}; do
+    if grep -wq clean_mic < <(pactl list sources short); then
+        pactl set-default-source clean_mic
+        echo "✓ Clean Mic is the default mic."
+        exit 0
+    fi
+    sleep 0.5
+done
+echo "⚠ Clean Mic didn't appear. Check: journalctl --user -u filter-chain.service"
+{{ end -}}
