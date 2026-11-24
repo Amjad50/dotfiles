@@ -121,6 +121,14 @@ if command -v dnf &>/dev/null; then
   {{- end -}}
   {{- end }}
 
+  # Fedora 45 packages lazygit itself; Terra's older build (installed under its
+  # Go package name) owns the same /usr/bin/lazygit, so installing Fedora's
+  # fails on a file conflict. Swap Terra's build out first.
+  if rpm -q golang-github-jesseduffield-lazygit &>/dev/null && dnf repoquery -q --repo=updates --repo=fedora lazygit 2>/dev/null | grep -q .; then
+    echo "  → Replacing Terra's lazygit with Fedora's..."
+    sudo dnf swap -y golang-github-jesseduffield-lazygit lazygit
+  fi
+
   {{ if $dnfToInstall -}}
   echo "  → Installing {{ len $dnfToInstall }} DNF packages..."
   # -y also auto-confirms importing repo GPG keys (some repos use repo_gpgcheck).
