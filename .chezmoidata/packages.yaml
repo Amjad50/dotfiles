@@ -21,6 +21,8 @@ tags:
     description: "Development tools (compilers, language managers, version control)"
   personal:
     description: "Laptop-specific packages (syncing, power management)"
+  caelestia:
+    description: "Caelestia Hyprland session next to KDE (see run_onchange_after_install-caelestia.sh.tmpl)"
 
 # ============================================================================
 # Packages organized by tags
@@ -222,7 +224,7 @@ machines:
 
   amjad-new-red:
     distro: fedora
-    tags: [dev, personal]
+    tags: [dev, personal, caelestia]
     age_recipient: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKpJhd6uXMEgUCrxHD7TcxtphhoPyPBTe7xKsv7T/mgi"
 
     packages:

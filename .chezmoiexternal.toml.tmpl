@@ -1,0 +1,10 @@
+{{- $tags := concat (list "default") (dig "tags" list (dig "machines" .chezmoi.hostname dict .)) | uniq -}}
+{{- if has "caelestia" $tags }}
+# Caelestia's Hyprland config, unmodified. Personal overrides live in
+# ~/.config/caelestia/hypr-{vars,user}.lua, never in here.
+[".config/hypr"]
+    type = "archive"
+    url = "https://github.com/caelestia-dots/caelestia/archive/{{ .caelestia.dots }}.tar.gz"
+    stripComponents = 2
+    include = ["*/hypr/**"]
+{{- end }}

@@ -1,0 +1,112 @@
+{{- $tags := concat (list "default") (dig "tags" list (dig "machines" .chezmoi.hostname dict .)) | uniq -}}
+{{- if and (has "caelestia" $tags) (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") -}}
+#!/usr/bin/env bash
+# ============================================================================
+# Caelestia: a Hyprland session next to KDE (pick it in the login screen).
+# - Hyprland + Quickshell: the COPR the official Hyprland wiki lists for Fedora,
+#   kept DISABLED so a normal `dnf upgrade` never pulls from it.
+# - Caelestia shell/CLI: built from the official caelestia-dots sources at the
+#   commits in .chezmoidata/caelestia.yaml, installed into ~/.local only.
+# Pins: {{ .caelestia | toJson }}
+# ============================================================================
+set -euo pipefail
+
+COPR_ID=copr-hyprland
+REPO=/etc/yum.repos.d/$COPR_ID.repo
+if [ ! -f "$REPO" ]; then
+  echo "→ Adding (disabled) Hyprland COPR repo: lionheartp/Hyprland"
+  sudo tee "$REPO" >/dev/null <<'__REPO_EOF__'
+[copr-hyprland]
+name=Copr repo for Hyprland owned by lionheartp
+baseurl=https://download.copr.fedorainfracloud.org/results/lionheartp/Hyprland/fedora-$releasever-$basearch/
+type=rpm-md
+gpgcheck=1
+gpgkey=https://download.copr.fedorainfracloud.org/results/lionheartp/Hyprland/pubkey.gpg
+repo_gpgcheck=0
+enabled=0
+enabled_metadata=1
+includepkgs=hypr* aquamarine* glaze* quickshell* xdg-desktop-portal-hyprland*
+__REPO_EOF__
+fi
+
+echo "→ Installing Hyprland/Quickshell (COPR) and Caelestia dependencies (Fedora/Terra)"
+sudo dnf install -y --enablerepo="$COPR_ID" \
+  hyprland xdg-desktop-portal-hyprland hyprpicker quickshell \
+  foot fuzzel cliphist wl-clipboard trash-cli gammastep swappy grim slurp \
+  gpu-screen-recorder brightnessctl ddcutil lm_sensors libnotify \
+  qt6-qtimageformats qt6-qtsvg qt6-qtmultimedia \
+  jetbrainsmono-nerd-fonts cascadiacode-nerd-fonts google-rubik-fonts \
+  darkly papirus-icon-theme \
+  git cmake ninja-build meson gcc-c++ uv \
+  qt6-qtbase-devel qt6-qtbase-private-devel qt6-qtdeclarative-devel \
+  qt6-qtshadertools-devel qt6-qtmultimedia-devel \
+  aubio-devel libqalculate-devel pipewire-devel lm_sensors-devel \
+  fftw-devel iniparser-devel \
+  extra-cmake-modules kf6-kconfig-devel kf6-kcolorscheme-devel kf6-kiconthemes-devel
+
+PREFIX="$HOME/.local"
+BUILD="${XDG_CACHE_HOME:-$HOME/.cache}/caelestia-build"
+STAMP="$BUILD/.installed"
+PINS='{{ .caelestia | toJson }}'
+mkdir -p "$BUILD"
+
+if [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$PINS" ]; then
+  echo "✓ Caelestia already built at these pins"
+  exit 0
+fi
+
+checkout() { # url ref dir
+  [ -d "$BUILD/$3/.git" ] || git clone -q "$1" "$BUILD/$3"
+  git -C "$BUILD/$3" fetch -q --tags origin
+  git -C "$BUILD/$3" checkout -q --force "$2"
+}
+
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
+echo "→ libcava {{ .caelestia.libcava }}"
+checkout https://github.com/LukashonakV/cava.git "{{ .caelestia.libcava }}" cava
+meson setup --wipe "$BUILD/cava/build" "$BUILD/cava" \
+  --prefix="$PREFIX" --libdir=lib --buildtype=release -Dbuild_target=lib >/dev/null
+meson install -C "$BUILD/cava/build" >/dev/null
+
+echo "→ m3shapes"
+checkout https://github.com/soramanew/m3shapes.git "{{ .caelestia.m3shapes }}" m3shapes
+cmake -S "$BUILD/m3shapes" -B "$BUILD/m3shapes/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX" -DINSTALL_QMLDIR=lib/qt6/qml \
+  -DCMAKE_INSTALL_RPATH='$ORIGIN' >/dev/null
+cmake --build "$BUILD/m3shapes/build"
+cmake --install "$BUILD/m3shapes/build" >/dev/null
+
+echo "→ caelestia shell"
+checkout https://github.com/caelestia-dots/shell.git "{{ .caelestia.shell }}" shell
+cmake -S "$BUILD/shell" -B "$BUILD/shell/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX" -DDISTRIBUTOR=chezmoi \
+  -DCMAKE_CXX_FLAGS="-isystem $PREFIX/include" \
+  -DINSTALL_LIBDIR=lib/caelestia -DINSTALL_QMLDIR=lib/qt6/qml \
+  -DINSTALL_QSCONFDIR="$HOME/.config/quickshell/caelestia" \
+  -DCMAKE_INSTALL_RPATH="$PREFIX/lib" >/dev/null
+cmake --build "$BUILD/shell/build"
+cmake --install "$BUILD/shell/build" >/dev/null
+
+echo "→ qtengine {{ .caelestia.qtengine }} (Qt6 only)"
+checkout https://github.com/kossLAN/qtengine.git "{{ .caelestia.qtengine }}" qtengine
+cmake -S "$BUILD/qtengine" -B "$BUILD/qtengine/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_QT5=OFF \
+  -DCMAKE_INSTALL_RPATH="$PREFIX/lib" >/dev/null
+cmake --build "$BUILD/qtengine/build"
+cmake --install "$BUILD/qtengine/build" >/dev/null
+
+echo "→ caelestia CLI"
+checkout https://github.com/caelestia-dots/cli.git "{{ .caelestia.cli }}" cli
+uv tool install --force --quiet "$BUILD/cli"
+
+echo "→ Material Symbols Rounded font"
+FONT_DIR="$HOME/.local/share/fonts/caelestia"
+mkdir -p "$FONT_DIR"
+curl -fsSL -o "$FONT_DIR/MaterialSymbolsRounded.ttf" \
+  "https://raw.githubusercontent.com/google/material-design-icons/{{ .caelestia.material_symbols }}/variablefont/MaterialSymbolsRounded%5BFILL,GRAD,opsz,wght%5D.ttf"
+fc-cache -f "$FONT_DIR" >/dev/null
+
+echo "$PINS" > "$STAMP"
+echo "✅ Caelestia installed. Log out and pick “Hyprland” in the login screen."
+{{ end -}}

@@ -1,0 +1,12 @@
+# Pinned Caelestia versions. To update: bump these (shell and cli usually move
+# together; the shell's flake.lock names the Quickshell commit it needs), then
+#   chezmoi apply ~/.config/hypr && chezmoi apply
+# The install script and the ~/.config/hypr archive both key off these values.
+caelestia:
+  dots: 01d2df329240be60148d25804690779a078c6378      # caelestia-dots/caelestia
+  shell: 1e44367c34ee36607b1d3d5f93cd28c35c3aaa8c     # caelestia-dots/shell (needs quickshell 9b0f339)
+  cli: 9c3b980c70a8650a47030f6d30251dc7731dc8bf       # caelestia-dots/cli
+  m3shapes: 32ad9ce328bb77ed349b40a3be10ee9ea610b8ab  # soramanew/m3shapes
+  libcava: "0.10.7"                                   # LukashonakV/cava tag
+  qtengine: "0.2.4"                                   # kossLAN/qtengine tag (Qt theme for Hyprland only)
+  material_symbols: 10ecc14790612ca8fd164e3f4ffe9c16fc50d5b7  # google/material-design-icons
