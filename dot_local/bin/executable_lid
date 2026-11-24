@@ -1,0 +1,412 @@
+#!/usr/bin/env python3
+"""lid — keep the laptop awake with the lid closed (KDE Plasma).
+
+  lid on        lid close does nothing (machine keeps running)
+  lid off       lid close suspends again (restores your previous setting)
+  lid toggle    flip it
+  lid status    show what the lid does right now
+
+How it works: PowerDevil owns the lid switch (it holds a block inhibitor on
+logind's handle-lid-switch), so logind.conf does nothing while Plasma runs.
+This writes PowerDevil's own `LidAction` for every power profile in
+~/.config/powerdevilrc and restarts the powerdevil daemon.
+
+Without PowerDevil (Hyprland, TTY) logind handles the lid itself, so `on`
+holds a logind handle-lid-switch inhibitor (a detached `systemd-inhibit`)
+and `off` releases it.
+
+Flags:
+  --idle        also stop idle auto-suspend (AutoSuspendAction) while on
+  --quiet       no output
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+CONF = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "powerdevilrc"
+STATE = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local" / "state") / "lid" / "state.json"
+LOGIND_STATE = STATE.with_name("logind.json")
+PROFILES = ["AC", "Battery", "LowBattery"]
+GROUP = "SuspendAndShutdown"
+LID_KEY = "LidAction"
+IDLE_KEY = "AutoSuspendAction"
+NO_ACTION = "0"          # PowerDevil::PowerButtonAction::NoAction
+SERVICE = "plasma-powerdevil.service"
+BUS = "org.kde.Solid.PowerManagement"
+LID_PATH = "/org/kde/Solid/PowerManagement/Actions/HandleButtonEvents"
+LID_IFACE = "org.kde.Solid.PowerManagement.Actions.HandleButtonEvents"
+
+
+# ---------- tiny ini surgery (sections look like [AC][SuspendAndShutdown]) ----------
+
+def _header(profile: str) -> str:
+    return f"[{profile}][{GROUP}]"
+
+
+def read_value(text: str, profile: str, key: str) -> str | None:
+    header = _header(profile)
+    in_section = False
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("[") and s.endswith("]"):
+            in_section = s == header
+            continue
+        if in_section and "=" in s:
+            k, _, v = s.partition("=")
+            if k.strip() == key:
+                return v.strip()
+    return None
+
+
+def set_value(text: str, profile: str, key: str, value: str | None) -> str:
+    """Set (or delete, when value is None) `key` inside the profile's section."""
+    header = _header(profile)
+    blocks: list[tuple[str | None, list[str]]] = [(None, [])]
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("[") and s.endswith("]"):
+            blocks.append((s, []))
+        else:
+            blocks[-1][1].append(line)
+
+    found = False
+    for i, (h, body) in enumerate(blocks):
+        if h != header:
+            continue
+        found = True
+        body = [l for l in body if not ("=" in l and l.strip().partition("=")[0].strip() == key)]
+        while body and not body[-1].strip():
+            body.pop()
+        if value is not None:
+            body.append(f"{key}={value}")
+        blocks[i] = (h, body)
+        break
+
+    if not found and value is not None:
+        blocks.append((header, [f"{key}={value}"]))
+
+    out: list[str] = []
+    for h, body in blocks:
+        body = [l for l in body]
+        while body and not body[-1].strip():
+            body.pop()
+        if h is None:
+            out.extend(body)
+            continue
+        if not any(b.strip() for b in body):
+            continue                     # drop empty sections
+        if out and out[-1].strip():
+            out.append("")
+        out.append(h)
+        out.extend(body)
+
+    return "\n".join(out).strip("\n") + "\n" if out else ""
+
+
+def prune_empty_sections(text: str) -> str:
+    """Drop section headers that no longer contain any keys."""
+    blocks: list[tuple[str | None, list[str]]] = [(None, [])]   # (header, body)
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("[") and s.endswith("]"):
+            blocks.append((s, []))
+        else:
+            blocks[-1][1].append(line)
+
+    out: list[str] = []
+    for header, body in blocks:
+        if header is not None and not any(b.strip() for b in body):
+            continue
+        if header is not None:
+            out.append(header)
+            out.extend(body)
+            continue
+        out.extend(body)
+    return "\n".join(out).strip("\n") + "\n" if out else ""
+
+
+# ---------- system helpers ----------
+
+def run(cmd: list[str]) -> str:
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=25)
+    except Exception:
+        return ""
+    return (p.stdout or "").strip()
+
+
+def service_active() -> bool:
+    return run(["systemctl", "--user", "is-active", SERVICE]) == "active"
+
+
+def stop_service() -> bool:
+    """Stop powerdevil so it does not overwrite our config on exit."""
+    if not service_active():
+        return True
+    run(["systemctl", "--user", "stop", SERVICE])
+    for _ in range(50):
+        if not service_active():
+            return True
+        time.sleep(0.1)
+    return False
+
+
+def restart_service() -> None:
+    run(["systemctl", "--user", "restart", SERVICE])
+    for _ in range(50):
+        if service_active():
+            break
+        time.sleep(0.1)
+    time.sleep(0.6)   # let it install its new profile
+
+
+def effective_lid_action() -> str | None:
+    out = run(["busctl", "--user", "call", BUS, LID_PATH, LID_IFACE, "lidAction"])
+    # "i 0"
+    parts = out.split()
+    if len(parts) == 2:
+        return parts[1]
+    return None
+
+
+def current_profile() -> str | None:
+    out = run(["busctl", "--user", "call", BUS, "/org/kde/Solid/PowerManagement", BUS, "currentProfile"])
+    # 's "AC"'
+    out = out.replace('"', "").split()
+    return out[1] if len(out) == 2 else None
+
+
+def lid_closed() -> bool | None:
+    out = run(["busctl", "--user", "call", BUS, "/org/kde/Solid/PowerManagement", BUS, "isLidClosed"])
+    parts = out.split()
+    return (parts[1] == "true") if len(parts) == 2 else None
+
+
+# ---------- state ----------
+
+def load_state() -> dict:
+    try:
+        return json.loads(STATE.read_text())
+    except Exception:
+        return {}
+
+
+def save_state(state: dict) -> None:
+    STATE.parent.mkdir(parents=True, exist_ok=True)
+    STATE.write_text(json.dumps(state, indent=2) + "\n")
+
+
+# ---------- commands ----------
+
+def enable(with_idle: bool) -> int:
+    if not CONF.exists():
+        print(f"lid: {CONF} not found — is Plasma running?", file=sys.stderr)
+        return 1
+
+    text = CONF.read_text()
+    state = load_state()
+    if state.get("active"):
+        saved = state.get("saved", {})
+    else:
+        saved = {p: read_value(text, p, LID_KEY) for p in PROFILES}
+        if with_idle:
+            saved["_idle"] = {p: read_value(text, p, IDLE_KEY) for p in PROFILES}
+
+    new = text
+    for p in PROFILES:
+        new = set_value(new, p, LID_KEY, NO_ACTION)
+        if with_idle:
+            new = set_value(new, p, IDLE_KEY, NO_ACTION)
+
+    was_active = service_active()
+    if was_active and not stop_service():
+        print("lid: could not stop plasma-powerdevil.service", file=sys.stderr)
+        return 1
+    CONF.write_text(new)
+    if was_active:
+        restart_service()
+
+    save_state({"active": True, "with_idle": with_idle, "saved": saved})
+
+    action = effective_lid_action()
+    if action == NO_ACTION:
+        print("lid: on — closing the lid will NOT suspend"
+              + (" (idle suspend also blocked)" if with_idle else ""))
+        return 0
+    print(f"lid: wrote the setting but PowerDevil still reports LidAction={action}", file=sys.stderr)
+    return 2
+
+
+def disable(quiet: bool = False) -> int:
+    state = load_state()
+    saved = state.get("saved", {})
+    text = CONF.read_text()
+
+    new = text
+    for p in PROFILES:
+        previous = saved.get(p) if isinstance(saved, dict) else None
+        new = set_value(new, p, LID_KEY, previous)
+    idle_saved = saved.get("_idle") if isinstance(saved, dict) else None
+    if idle_saved:
+        for p in PROFILES:
+            new = set_value(new, p, IDLE_KEY, idle_saved.get(p))
+    new = prune_empty_sections(new)
+
+    was_active = service_active()
+    if was_active and not stop_service():
+        print("lid: could not stop plasma-powerdevil.service", file=sys.stderr)
+        return 1
+    CONF.write_text(new)
+    if was_active:
+        restart_service()
+
+    try:
+        STATE.unlink()
+    except FileNotFoundError:
+        pass
+
+    if not quiet:
+        action = effective_lid_action()
+        names = {"0": "do nothing", "1": "suspend", "2": "hibernate",
+                 "8": "shut down", "16": "ask", "32": "lock screen",
+                 "64": "turn off screen", "128": "toggle screen"}
+        label = names.get(action or "", f"code {action}")
+        print(f"lid: off — closing the lid will {label}")
+    return 0
+
+
+def status() -> int:
+    state = load_state()
+    text = CONF.read_text() if CONF.exists() else ""
+    action = effective_lid_action()
+    names = {"0": "do nothing (stay awake)", "1": "suspend", "2": "hibernate",
+             "8": "shut down", "16": "ask", "32": "lock screen",
+             "64": "turn off screen", "128": "toggle screen on/off"}
+    prof = current_profile()
+    closed = lid_closed()
+
+    print(f"lid mode   : {'ON (stays awake)' if state.get('active') else 'off (normal)'}")
+    print(f"lid action : {names.get(action or '', 'unknown')}" + (f"  [code {action}]" if action else ""))
+    if prof:
+        print(f"profile    : {prof}")
+    if closed is not None:
+        print(f"lid        : {'closed' if closed else 'open'}")
+    stored = {p: read_value(text, p, LID_KEY) for p in PROFILES}
+    if any(v is not None for v in stored.values()):
+        print("config     : " + ", ".join(f"{p}={'unset' if v is None else v}" for p, v in stored.items()))
+    if state.get("with_idle"):
+        print("idle suspend: blocked while lid mode is on")
+    return 0
+
+
+# ---------- logind mode (no PowerDevil: Hyprland, TTY) ----------
+
+def inhibitor_alive(pid: int | None) -> bool:
+    if not pid:
+        return False
+    try:
+        cmdline = Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
+    except OSError:
+        return False
+    return bool(cmdline) and cmdline[0].endswith(b"systemd-inhibit") and b"--who=lid" in cmdline
+
+
+def load_logind_state() -> dict:
+    try:
+        return json.loads(LOGIND_STATE.read_text())
+    except Exception:
+        return {}
+
+
+def logind_enable(with_idle: bool, quiet: bool) -> int:
+    state = load_logind_state()
+    if not inhibitor_alive(state.get("pid")):
+        what = "handle-lid-switch:idle" if with_idle else "handle-lid-switch"
+        proc = subprocess.Popen(
+            ["systemd-inhibit", f"--what={what}", "--who=lid", "--why=lid on",
+             "--mode=block", "sleep", "infinity"],
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, start_new_session=True,
+        )
+        time.sleep(0.3)
+        if proc.poll() is not None:
+            print("lid: systemd-inhibit failed to start", file=sys.stderr)
+            return 1
+        state = {"with_idle": with_idle, "pid": proc.pid}
+        LOGIND_STATE.parent.mkdir(parents=True, exist_ok=True)
+        LOGIND_STATE.write_text(json.dumps(state, indent=2) + "\n")
+    if not quiet:
+        print("lid: on — closing the lid will NOT suspend"
+              + (" (idle suspend also blocked)" if state.get("with_idle") else ""))
+    return 0
+
+
+def logind_disable(quiet: bool) -> int:
+    pid = load_logind_state().get("pid")
+    if inhibitor_alive(pid):
+        os.kill(pid, 15)
+    try:
+        LOGIND_STATE.unlink()
+    except FileNotFoundError:
+        pass
+    if not quiet:
+        action = run(["busctl", "get-property", "org.freedesktop.login1", "/org/freedesktop/login1",
+                      "org.freedesktop.login1.Manager", "HandleLidSwitch"]).split()[-1:] or ["?"]
+        print(f"lid: off — closing the lid will {action[0].strip(chr(34))}")
+    return 0
+
+
+def logind_status() -> int:
+    state = load_logind_state()
+    on = inhibitor_alive(state.get("pid"))
+    print(f"lid mode   : {'ON (stays awake)' if on else 'off (normal)'}  [logind, no PowerDevil]")
+    for prop in ("HandleLidSwitch", "HandleLidSwitchExternalPower", "HandleLidSwitchDocked", "Docked"):
+        out = run(["busctl", "get-property", "org.freedesktop.login1", "/org/freedesktop/login1",
+                   "org.freedesktop.login1.Manager", prop]).split()
+        if out:
+            print(f"{prop:<28}: {out[-1].strip(chr(34)) or '(same as HandleLidSwitch)'}")
+    if on and state.get("with_idle"):
+        print("idle suspend: blocked while lid mode is on")
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    args = [a for a in argv[1:] if not a.startswith("--")]
+    flags = {a for a in argv[1:] if a.startswith("--")}
+    cmd = args[0] if args else "status"
+    quiet = "--quiet" in flags or "-q" in flags
+
+    # No PowerDevil running (Hyprland, TTY): logind owns the lid switch.
+    if not service_active():
+        if cmd in ("on", "awake", "enable"):
+            return logind_enable("--idle" in flags, quiet)
+        if cmd in ("off", "normal", "disable", "reset"):
+            return logind_disable(quiet)
+        if cmd == "toggle":
+            on = inhibitor_alive(load_logind_state().get("pid"))
+            return logind_disable(quiet) if on else logind_enable("--idle" in flags, quiet)
+        if cmd == "status":
+            return logind_status()
+        print(__doc__.strip(), file=sys.stderr)
+        return 1
+
+    if cmd in ("on", "awake", "enable"):
+        return enable(with_idle="--idle" in flags)
+    if cmd in ("off", "normal", "disable", "reset"):
+        return disable(quiet=quiet)
+    if cmd == "toggle":
+        return disable(quiet=quiet) if load_state().get("active") else enable("--idle" in flags)
+    if cmd == "status":
+        return status()
+    print(__doc__.strip(), file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
