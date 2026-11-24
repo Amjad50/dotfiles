@@ -1,0 +1,152 @@
+diff --git a/modules/bar/components/ActiveWindow.qml b/modules/bar/components/ActiveWindow.qml
+index d45aaf77..55d5cd9b 100644
+--- a/modules/bar/components/ActiveWindow.qml
++++ b/modules/bar/components/ActiveWindow.qml
+@@ -84,7 +84,7 @@ Item {
+ 
+     clip: true
+     implicitWidth: Math.max(icon.implicitWidth, current.implicitHeight)
+-    implicitHeight: icon.implicitHeight + current.implicitWidth + current.anchors.topMargin
++    implicitHeight: (icon.visible ? icon.implicitHeight : 0) + current.implicitWidth + current.anchors.topMargin
+ 
+     Loader {
+         asynchronous: true
+@@ -117,6 +117,10 @@ Item {
+ 
+         anchors.horizontalCenter: parent.horizontalCenter
+ 
++        // Hidden: the workspace strip already shows the active app's real icon
++        visible: false
++        height: 0
++
+         animate: true
+         text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")
+         color: root.colour
+diff --git a/modules/bar/components/workspaces/ActiveIndicator.qml b/modules/bar/components/workspaces/ActiveIndicator.qml
+index a4501529..67a74fe0 100644
+--- a/modules/bar/components/workspaces/ActiveIndicator.qml
++++ b/modules/bar/components/workspaces/ActiveIndicator.qml
+@@ -68,6 +68,8 @@ StyledRect {
+     Colouriser {
+         id: colouriser
+ 
++        visible: false // glyph colours come from Workspace.fgColour instead
++
+         source: root.mask
+         sourceColor: Colours.palette.m3onSurface
+         colorizationColor: Colours.palette.m3onPrimary
+diff --git a/modules/bar/components/workspaces/OccupiedBg.qml b/modules/bar/components/workspaces/OccupiedBg.qml
+index 2c484743..0762bbf0 100644
+--- a/modules/bar/components/workspaces/OccupiedBg.qml
++++ b/modules/bar/components/workspaces/OccupiedBg.qml
+@@ -54,6 +54,7 @@ Item {
+         property real bottomPadding: ifAdjacent(root.workspaces.length - 1, 1, root.wsSpacing, 0)
+ 
+         function ifAdjacent(exclIdx: int, adj: int, yes: real, no: real): real {
++            return no; // one separate group per workspace, never merged with neighbours
+             if (AnimatedRepeater.adding || AnimatedRepeater.removing || !modelData?.isOccupied || index === exclIdx)
+                 return no;
+             return root.workspaces[index + adj]?.isOccupied ? yes : no;
+diff --git a/modules/bar/components/workspaces/Workspace.qml b/modules/bar/components/workspaces/Workspace.qml
+index 0ecf6872..6aede17a 100644
+--- a/modules/bar/components/workspaces/Workspace.qml
++++ b/modules/bar/components/workspaces/Workspace.qml
+@@ -4,6 +4,7 @@ import QtQuick
+ import QtQuick.Layouts
+ import Quickshell
+ import Quickshell.Hyprland
++import Quickshell.Widgets
+ import M3Shapes
+ import Caelestia.Components
+ import Caelestia.Config
+@@ -43,6 +44,8 @@ Item {
+     readonly property color fgColour: {
+         if (onOtherMonitor)
+             return offMonitorColour;
++        if (focused && Config.bar.workspaces.activeIndicator)
++            return Colours.palette.m3onPrimary;
+         if (focused || isOccupied || Config.bar.workspaces.occupiedBg)
+             return Colours.palette.m3onSurface;
+         return Colours.layer(Colours.palette.m3outlineVariant, 2);
+@@ -183,6 +186,7 @@ Item {
+ 
+             Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+             Layout.preferredHeight: Tokens.sizes.bar.innerWidth - Tokens.padding.small
++            visible: !root.hasWindows // workspaces with windows show only their app icons
+             sourceComponent: {
+                 if (root.displayType === BarWorkspaceDisplay.Icons)
+                     return iconLoaderComponent;
+@@ -200,7 +204,8 @@ Item {
+             asynchronous: true
+ 
+             Layout.fillWidth: true
+-            Layout.topMargin: -Tokens.spacing.extraSmall / 2
++            // No label above the icons any more, so pad the top of the group instead
++            Layout.topMargin: root.hasWindows ? Tokens.padding.small : -Tokens.spacing.extraSmall / 2
+             Layout.preferredHeight: root.hasWindows && item ? (item as LazyListView).layoutHeight : 0
+ 
+             visible: active
+@@ -220,19 +225,38 @@ Item {
+                     }
+                 }
+ 
+-                delegate: MaterialIcon {
++                delegate: Item {
+                     id: win
+ 
+                     required property var modelData
+                     required property int index // Needed, LazyListView will fail to set it if it doesn't exist
+ 
+-                    grade: 0
+-                    horizontalAlignment: Text.AlignHCenter
+-                    text: Icons.getAppCategoryIcon(modelData.lastIpcObject.class, "terminal")
+-                    color: root.onOtherMonitor ? root.offMonitorColour : Colours.palette.m3onSurfaceVariant
++                    // Real app icon from the window's desktop entry; category glyph if it has none
++                    readonly property string appIcon: Quickshell.iconPath(DesktopEntries.heuristicLookup(modelData.lastIpcObject.class)?.icon ?? "", true)
++
++                    anchors.horizontalCenter: parent?.horizontalCenter
++                    implicitWidth: Math.round(Tokens.sizes.bar.innerWidth * 0.5)
++                    implicitHeight: implicitWidth + Math.round(Tokens.padding.small / 2)
+ 
+                     opacity: LazyListView.adding || LazyListView.removing ? 0 : 1
+ 
++                    IconImage {
++                        anchors.centerIn: parent
++                        visible: win.appIcon !== ""
++                        asynchronous: true
++                        implicitSize: win.implicitWidth
++                        source: win.appIcon
++                        opacity: root.onOtherMonitor ? 0.5 : 1
++                    }
++
++                    MaterialIcon {
++                        anchors.centerIn: parent
++                        visible: win.appIcon === ""
++                        grade: 0
++                        text: Icons.getAppCategoryIcon(win.modelData.lastIpcObject.class, "terminal")
++                        color: root.onOtherMonitor ? root.offMonitorColour : root.focused && Config.bar.workspaces.activeIndicator ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
++                    }
++
+                     Behavior on opacity {
+                         Anim {
+                             type: Anim.DefaultEffects
+diff --git a/modules/bar/components/workspaces/Workspaces.qml b/modules/bar/components/workspaces/Workspaces.qml
+index 7605fa95..50431400 100644
+--- a/modules/bar/components/workspaces/Workspaces.qml
++++ b/modules/bar/components/workspaces/Workspaces.qml
+@@ -88,6 +88,7 @@ ClipRect {
+             asynchronous: true
+             opacity: Config.bar.workspaces.occupiedBg ? 1 : 0
+             active: opacity > 0
++            z: -2 // below the active pill (z: -1)
+ 
+             anchors.fill: parent
+             anchors.margins: Tokens.padding.extraSmall
+@@ -159,6 +160,7 @@ ClipRect {
+             anchors.left: workspaces.left
+             anchors.right: workspaces.right
+             active: Config.bar.workspaces.activeIndicator
++            z: -1 // pill behind the strip so real app icons keep their colours
+ 
+             sourceComponent: ActiveIndicator {
+                 activeWs: {

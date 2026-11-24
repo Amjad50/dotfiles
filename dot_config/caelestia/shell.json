@@ -49,7 +49,7 @@
         "workspaces": {
             "activeIndicator": true,
             "activeTrail": true,
-            "occupiedBg": false,
+            "occupiedBg": true,
             "perMonitor": true,
             "showUnoccupied": true,
             "showWindowsOnSpecialWorkspaces": true,
