@@ -1,0 +1,17 @@
+{{ if dig "machines" .chezmoi.hostname "wake_on_lan" false . -}}
+#!/usr/bin/env bash
+set -euo pipefail
+
+sudo tee /etc/NetworkManager/conf.d/wake-on-lan.conf > /dev/null << 'EOF_CONF'
+[connection-wake-on-lan]
+ethernet.wake-on-lan=magic
+EOF_CONF
+sudo nmcli general reload conf
+
+for path in /sys/class/net/*; do
+  dev=${path##*/}
+  if sudo ethtool "$dev" 2>/dev/null | grep -q 'Supports Wake-on: .*g'; then
+    sudo ethtool -s "$dev" wol g
+  fi
+done
+{{ end -}}

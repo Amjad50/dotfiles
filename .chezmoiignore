@@ -22,3 +22,7 @@ docs
 .thunderbird/.chezmoi-tb/virtualFolders.dat
 .thunderbird/.chezmoi-tb/mailViews.dat
 {{- end }}
+
+{{- if not (dig "machines" .chezmoi.hostname "upsnap_shutdown_key" "" .) }}
+.ssh/authorized_keys
+{{- end }}
