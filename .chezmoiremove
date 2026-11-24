@@ -1,3 +1,4 @@
 .config/nvim/docs
 .config/nvim/lua/core/minuet_*.lua
 .config/nvim/lua/plugins/ai.lua
+.config/pipewire/filter-chain.conf.d/clean-mic.conf
