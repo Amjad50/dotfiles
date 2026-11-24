@@ -6,6 +6,7 @@ return {
     cursorSize           = 24,
 
     -- Apps
+    terminal             = "konsole",
     browser              = "zen-browser",
     editor               = "code",
     fileExplorer         = "dolphin",
@@ -19,4 +20,13 @@ return {
     kbBrowser            = "SUPER + B", -- Super+W closes windows now
     kbTerminal           = { "SUPER + T", "SUPER + Return" },
     kbLauncher           = { "SUPER + SUPER_L", "SUPER + Space" },
+
+    -- KDE/Spectacle-style capture: Super+R region screenshot, Super+Shift+R region recording
+    kbScreenshotFreeze   = { "SUPER + SHIFT + S", "SUPER + R" },
+    kbRecordRegion       = { "SUPER + SHIFT + ALT + R", "SUPER + SHIFT + R" },
+    kbTodoWs             = "", -- was Super+R (Todoist workspace, unused)
+
+    -- Quick maximize (keeps the bar); Super+F stays true fullscreen
+    kbWindowBorderedFullscreen = { "SUPER + ALT + F", "SUPER + M" },
+    kbMusicWs            = "", -- was Super+M (Spotify workspace)
 }

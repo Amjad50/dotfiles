@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=T3 Code
+Comment=T3 Code desktop (AppImage)
+# --password-store=kwallet6: read the saved-environments key from KWallet in any
+# session; outside KDE (Hyprland) Chromium would otherwise use libsecret and
+# fail to decrypt ~/.t3/userdata/connection-catalog.json.
+Exec=/home/amjad/Downloads/T3-Code-x86_64.AppImage --password-store=kwallet6 %U
+Icon=/home/amjad/.local/share/icons/com.t3tools.T3Code.desktop.png
+Terminal=false
+StartupWMClass=com.t3tools.T3Code
+Categories=Development;

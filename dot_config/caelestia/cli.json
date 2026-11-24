@@ -1,5 +1,6 @@
 {
   "theme": {
+    "enableTerm": false,
     "enableGtk": false,
     "enableQt": true,
     "enableHtop": false,

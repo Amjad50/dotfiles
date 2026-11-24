@@ -21,6 +21,11 @@ docs
 .config/foot
 {{- end }}
 
+{{- /* T3 Code menu entry only where its AppImage is. */}}
+{{- if not (stat (printf "%s/Downloads/T3-Code-x86_64.AppImage" .chezmoi.homeDir)) }}
+.local/share/applications/t3code.desktop
+{{- end }}
+
 {{- /* age (the binary, for SSH-key identities) must exist too, else chezmoi's
        built-in age can't decrypt and aborts apply before packages install. */}}
 {{- if not (and (stat (printf "%s/.ssh/id_ed25519" .chezmoi.homeDir)) (lookPath "age")) }}

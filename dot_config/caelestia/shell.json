@@ -1,10 +1,43 @@
 {
-  "general": {
-    "idle": {
-      "timeouts": [
-        { "timeout": 180, "idleAction": "lock" },
-        { "timeout": 300, "idleAction": "dpms off", "returnAction": "dpms on" }
-      ]
+    "dashboard": {
+        "showClockSeconds": false
+    },
+    "general": {
+        "idle": {
+            "timeouts": [
+                {
+                    "enabled": true,
+                    "idleAction": "lock",
+                    "inhibitWhenAudio": false,
+                    "inhibitWhenCharging": false,
+                    "respectInhibitors": true,
+                    "timeout": 180
+                },
+                {
+                    "enabled": true,
+                    "idleAction": "dpms off",
+                    "inhibitWhenAudio": false,
+                    "inhibitWhenCharging": false,
+                    "respectInhibitors": true,
+                    "returnAction": "dpms on",
+                    "timeout": 300
+                }
+            ]
+        },
+        "apps": {
+            "explorer": [
+                "dolphin"
+            ],
+            "audio": [
+                "kcmshell6",
+                "kcm_pulseaudio"
+            ],
+            "terminal": [
+                "konsole"
+            ]
+        }
+    },
+    "services": {
+        "weatherUnits": "Celsius"
     }
-  }
 }
