@@ -1,8 +1,77 @@
 {
+    "bar": {
+        "activeWindow": {
+            "compact": false,
+            "inverted": false,
+            "showOnHover": false
+        },
+        "clock": {
+            "background": false,
+            "showDate": true,
+            "showIcon": false,
+            "showSeconds": false
+        },
+        "persistent": true,
+        "popouts": {
+            "activeWindow": true
+        },
+        "showOnHover": true,
+        "statusIcons": [
+            {
+                "enabled": true,
+                "id": "lockStatus"
+            },
+            {
+                "enabled": false,
+                "id": "audio"
+            },
+            {
+                "enabled": true,
+                "id": "microphone"
+            },
+            {
+                "enabled": true,
+                "id": "kbLayout"
+            },
+            {
+                "enabled": true,
+                "id": "network"
+            },
+            {
+                "enabled": true,
+                "id": "bluetooth"
+            },
+            {
+                "enabled": true,
+                "id": "battery"
+            }
+        ],
+        "workspaces": {
+            "activeIndicator": true,
+            "activeTrail": true,
+            "occupiedBg": false,
+            "perMonitor": true,
+            "showUnoccupied": true,
+            "showWindowsOnSpecialWorkspaces": true,
+            "shown": 5
+        }
+    },
     "dashboard": {
         "showClockSeconds": false
     },
     "general": {
+        "apps": {
+            "audio": [
+                "kcmshell6",
+                "kcm_pulseaudio"
+            ],
+            "explorer": [
+                "dolphin"
+            ],
+            "terminal": [
+                "konsole"
+            ]
+        },
         "idle": {
             "timeouts": [
                 {
@@ -23,21 +92,22 @@
                     "timeout": 300
                 }
             ]
-        },
-        "apps": {
-            "explorer": [
-                "dolphin"
-            ],
-            "audio": [
-                "kcmshell6",
-                "kcm_pulseaudio"
-            ],
-            "terminal": [
-                "konsole"
-            ]
+        }
+    },
+    "launcher": {
+        "showOnHover": false,
+        "useFuzzy": {
+            "actions": true,
+            "apps": true,
+            "schemes": true,
+            "variants": true,
+            "wallpapers": true
         }
     },
     "services": {
         "weatherUnits": "Celsius"
+    },
+    "sidebar": {
+        "showOnHover": false
     }
 }
