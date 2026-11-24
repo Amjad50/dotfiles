@@ -1,5 +1,6 @@
 .config/syncthing
 docs
+patches
 
 {{- /* The Claude Desktop updater uses Fedora's RPM/DNF package management. */}}
 {{- if not (and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora")) }}

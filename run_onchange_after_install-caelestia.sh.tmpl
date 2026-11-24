@@ -47,7 +47,7 @@ sudo dnf install -y --enablerepo="$COPR_ID" \
 PREFIX="$HOME/.local"
 BUILD="${XDG_CACHE_HOME:-$HOME/.cache}/caelestia-build"
 STAMP="$BUILD/.installed"
-PINS='{{ .caelestia | toJson }}'
+PINS='{{ .caelestia | toJson }} patch:{{ include "patches/caelestia-shell-file-icons.patch" | sha256sum }}'
 mkdir -p "$BUILD"
 
 if [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$PINS" ]; then
@@ -79,6 +79,10 @@ cmake --install "$BUILD/m3shapes/build" >/dev/null
 
 echo "→ caelestia shell"
 checkout https://github.com/caelestia-dots/shell.git "{{ .caelestia.shell }}" shell
+# Local fix: notification icons sent as file paths/URLs (e.g. Claude's) showed a
+# "missing icon" checkerboard. Drop once upstream handles it (caelestia-dots/shell#1904).
+git -C "$BUILD/shell" apply <<'__PATCH_EOF__'
+{{ include "patches/caelestia-shell-file-icons.patch" }}__PATCH_EOF__
 cmake -S "$BUILD/shell" -B "$BUILD/shell/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX="$PREFIX" -DDISTRIBUTOR=chezmoi \
   -DCMAKE_CXX_FLAGS="-isystem $PREFIX/include" \

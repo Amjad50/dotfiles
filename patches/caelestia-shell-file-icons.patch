@@ -1,0 +1,57 @@
+diff --git a/modules/lock/NotifGroup.qml b/modules/lock/NotifGroup.qml
+index bc94fc84..3c5ca2cd 100644
+--- a/modules/lock/NotifGroup.qml
++++ b/modules/lock/NotifGroup.qml
+@@ -89,7 +89,7 @@ StyledRect {
+ 
+                 ColouredIcon {
+                     implicitSize: Math.round(TokenConfig.sizes.notifs.image * 0.6)
+-                    source: Quickshell.iconPath(root.appIcon)
++                    source: root.appIcon.includes("/") ? root.appIcon : Quickshell.iconPath(root.appIcon)
+                     colour: root.urgency === "critical" ? Colours.palette.m3onError : root.urgency === "low" ? Colours.palette.m3onSurface : Colours.palette.m3onSecondaryContainer
+                     layer.enabled: root.appIcon.endsWith("symbolic")
+                 }
+@@ -133,7 +133,7 @@ StyledRect {
+                     ColouredIcon {
+                         anchors.centerIn: parent
+                         implicitSize: Math.round(Tokens.sizes.notifs.badge * 0.6)
+-                        source: Quickshell.iconPath(root.appIcon)
++                        source: root.appIcon.includes("/") ? root.appIcon : Quickshell.iconPath(root.appIcon)
+                         colour: root.urgency === "critical" ? Colours.palette.m3onError : root.urgency === "low" ? Colours.palette.m3onSurface : Colours.palette.m3onSecondaryContainer
+                         layer.enabled: root.appIcon.endsWith("symbolic")
+                     }
+diff --git a/modules/notifications/Notification.qml b/modules/notifications/Notification.qml
+index 118cdbe2..effe9405 100644
+--- a/modules/notifications/Notification.qml
++++ b/modules/notifications/Notification.qml
+@@ -165,7 +165,7 @@ StyledRect {
+ 
+                         sourceComponent: ColouredIcon {
+                             anchors.fill: parent
+-                            source: Quickshell.iconPath(root.modelData.appIcon)
++                            source: root.modelData.appIcon.includes("/") ? root.modelData.appIcon : Quickshell.iconPath(root.modelData.appIcon)
+                             colour: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : root.modelData.urgency === NotificationUrgency.Low ? Colours.palette.m3onSurface : Colours.palette.m3onSecondaryContainer
+                             layer.enabled: root.modelData.appIcon.endsWith("symbolic")
+                         }
+diff --git a/modules/sidebar/NotifGroup.qml b/modules/sidebar/NotifGroup.qml
+index b2ac4ab6..0b8afe73 100644
+--- a/modules/sidebar/NotifGroup.qml
++++ b/modules/sidebar/NotifGroup.qml
+@@ -101,7 +101,7 @@ StyledRect {
+ 
+                 ColouredIcon {
+                     implicitSize: Math.round(TokenConfig.sizes.notifs.image * 0.6)
+-                    source: Quickshell.iconPath(root.appIcon)
++                    source: root.appIcon.includes("/") ? root.appIcon : Quickshell.iconPath(root.appIcon)
+                     colour: root.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : root.urgency === NotificationUrgency.Low ? Colours.palette.m3onSurface : Colours.palette.m3onSecondaryContainer
+                     layer.enabled: root.appIcon.endsWith("symbolic")
+                 }
+@@ -146,7 +146,7 @@ StyledRect {
+                     ColouredIcon {
+                         anchors.centerIn: parent
+                         implicitSize: Math.round(Tokens.sizes.notifs.badge * 0.6)
+-                        source: Quickshell.iconPath(root.appIcon)
++                        source: root.appIcon.includes("/") ? root.appIcon : Quickshell.iconPath(root.appIcon)
+                         colour: root.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : root.urgency === NotificationUrgency.Low ? Colours.palette.m3onSurface : Colours.palette.m3onSecondaryContainer
+                         layer.enabled: root.appIcon.endsWith("symbolic")
+                     }
