@@ -2,16 +2,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-sudo tee /etc/NetworkManager/conf.d/wake-on-lan.conf > /dev/null << 'EOF_CONF'
-[connection-wake-on-lan]
-ethernet.wake-on-lan=magic
-EOF_CONF
-sudo nmcli general reload conf
+nmcli -g UUID,TYPE connection show | while IFS=: read -r uuid type; do
+  [ "$type" = 802-3-ethernet ] || continue
+  sudo nmcli connection modify "$uuid" 802-3-ethernet.wake-on-lan magic
+done
 
-for path in /sys/class/net/*; do
-  dev=${path##*/}
-  if sudo ethtool "$dev" 2>/dev/null | grep -q 'Supports Wake-on: .*g'; then
-    sudo ethtool -s "$dev" wol g
-  fi
+nmcli -g DEVICE,TYPE,STATE device | while IFS=: read -r dev type state; do
+  [ "$type" = ethernet ] && [ "$state" = connected ] || continue
+  sudo nmcli device reapply "$dev"
 done
 {{ end -}}
