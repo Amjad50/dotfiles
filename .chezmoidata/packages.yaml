@@ -181,6 +181,7 @@ machines:
     age_recipient: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGRGvFgz+AH8SllcU1ZRbVw5cyfzCOo5gRuxu+DLMLHn"
     wake_on_lan: true
     upsnap_shutdown_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKMcI7wEXR4aO3piwnzWkYFSsKXUd2GgnpwOFDEQez6h upsnap@home"
+    backup_verify_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEVhsszD55TxLlp+9DYEQf3ugGJJ1U00HWyFVvBpGUpF backup-verify@home"
 
     packages:
       dnf:

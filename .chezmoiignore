@@ -23,6 +23,6 @@ docs
 .thunderbird/.chezmoi-tb/mailViews.dat
 {{- end }}
 
-{{- if not (dig "machines" .chezmoi.hostname "upsnap_shutdown_key" "" .) }}
+{{- if not (or (dig "machines" .chezmoi.hostname "upsnap_shutdown_key" "" .) (dig "machines" .chezmoi.hostname "backup_verify_key" "" .)) }}
 .ssh/authorized_keys
 {{- end }}

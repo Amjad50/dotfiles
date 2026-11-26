@@ -1,7 +1,14 @@
 {{- /* chezmoi:modify-template */ -}}
+{{- $upsnap := dig "machines" .chezmoi.hostname "upsnap_shutdown_key" "" . -}}
+{{- $verify := dig "machines" .chezmoi.hostname "backup_verify_key" "" . -}}
 {{- range splitList "\n" .chezmoi.stdin -}}
-{{-   if and . (not (hasSuffix " upsnap@home" .)) -}}
+{{-   if and . (not (hasSuffix " upsnap@home" .)) (not (hasSuffix " backup-verify@home" .)) -}}
 {{      . }}
 {{    end -}}
 {{- end -}}
-restrict,from="192.168.100.5",command="sudo systemctl poweroff" {{ dig "machines" .chezmoi.hostname "upsnap_shutdown_key" "" . }}
+{{- if $upsnap -}}
+restrict,from="192.168.100.5",command="sudo systemctl poweroff" {{ $upsnap }}
+{{ end -}}
+{{- if $verify -}}
+restrict,port-forwarding,permitopen="127.0.0.1:2222",from="192.168.100.5" {{ $verify }}
+{{ end -}}
